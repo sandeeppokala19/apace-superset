@@ -332,7 +332,7 @@ const ResultSet = ({
       exportMenuItems.push({
         label: t('CSV'),
         key: 'csv',
-        icon: <FileOutlined />,
+        icon: <Icons.FileOutlined />,
         onClick: () => {
           logAction(LOG_ACTIONS_SQLLAB_DOWNLOAD_CSV, {});
           window.open(getExportCsvUrl(query.id), '_blank')?.focus();
@@ -342,7 +342,7 @@ const ResultSet = ({
         exportMenuItems.push({
           label: t('Google Sheets'),
           key: 'google-sheets',
-          icon: <GoogleOutlined />,
+          icon: <Icons.GoogleOutlined />,
           onClick: () =>
             window.open(getExportGoogleSheetsUrl(query.id), '_blank')?.focus(),
         });
@@ -382,7 +382,7 @@ const ResultSet = ({
                 <Button>
                   <Space>
                     Export
-                    <DownOutlined />
+                    <Icons.DownOutlined />
                   </Space>
                 </Button>
               </AntdDropdown>
