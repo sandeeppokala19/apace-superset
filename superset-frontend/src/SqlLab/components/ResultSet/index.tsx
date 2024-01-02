@@ -356,7 +356,7 @@ const ResultSet = ({
           ))}
         </Menu>
       );
-      const hasExports = 0 < exportMenuItems.length && canExportData
+      const hasExports = exportMenuItems.length > 0 && canExportData;
 
       return (
         <ResultSetControls>
