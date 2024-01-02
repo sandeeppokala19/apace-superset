@@ -36,8 +36,8 @@ import Button from 'src/components/Button';
 import shortid from 'shortid';
 import {
   FeatureFlag,
-  isFeatureEnabled,
   QueryState,
+  isFeatureEnabled,
   styled,
   t,
   tn,
@@ -84,6 +84,8 @@ import { AntdDropdown } from 'src/components';
 import Icons from 'src/components/Icons';
 import { Menu } from 'src/components/Menu';
 import { findPermission } from 'src/utils/findPermission';
+
+import { UserWithPermissionsAndRoles } from 'src/types/bootstrapTypes';
 import { prepareCopyToClipboardTabularData } from 'src/utils/common';
 import ExploreCtasResultsButton from '../ExploreCtasResultsButton';
 import ExploreResultsButton from '../ExploreResultsButton';
@@ -326,27 +328,32 @@ const ResultSet = ({
       );
 
       // Antd >= 4.24.0 format:
-      const exportMenuItems = []
+      const exportMenuItems = [];
       exportMenuItems.push({
         label: t('CSV'),
         key: 'csv',
         icon: <FileOutlined />,
         onClick: () => {
-          logAction(LOG_ACTIONS_SQLLAB_DOWNLOAD_CSV, {})
-          window.open(getExportCsvUrl(query.id), '_blank')?.focus()
+          logAction(LOG_ACTIONS_SQLLAB_DOWNLOAD_CSV, {});
+          window.open(getExportCsvUrl(query.id), '_blank')?.focus();
         },
-      })
+      });
       if (isFeatureEnabled(FeatureFlag.GOOGLE_SHEETS_EXPORT)) {
         exportMenuItems.push({
           label: t('Google Sheets'),
           key: 'google-sheets',
           icon: <GoogleOutlined />,
-          onClick: () => window.open(getExportGoogleSheetsUrl(query.id), '_blank')?.focus(),
+          onClick: () =>
+            window.open(getExportGoogleSheetsUrl(query.id), '_blank')?.focus(),
         });
       }
       const ExportMenu = (
         <Menu>
-          {exportMenuItems.map(item => (<Menu.Item key={item.key} onClick={item.onClick}> {item.icon} {item.label} </Menu.Item>))}
+          {exportMenuItems.map(item => (
+            <Menu.Item key={item.key} onClick={item.onClick}>
+              {item.icon} {item.label}
+            </Menu.Item>
+          ))}
         </Menu>
       );
       const hasExports = 0 < exportMenuItems.length && canExportData
