@@ -382,7 +382,7 @@ const ResultSet = ({
                 <Button>
                   <Space>
                     Export
-                    <Icons.DownOutlined />
+                    <Icons.DownOutlined iconSize="s" />
                   </Space>
                 </Button>
               </AntdDropdown>
