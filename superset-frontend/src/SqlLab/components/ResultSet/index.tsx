@@ -338,7 +338,7 @@ const ResultSet = ({
           window.open(getExportCsvUrl(query.id), '_blank')?.focus();
         },
       });
-      if (isFeatureEnabled(FeatureFlag.GOOGLE_SHEETS_EXPORT)) {
+      if (isFeatureEnabled(FeatureFlag.GoogleSheetsExport)) {
         exportMenuItems.push({
           label: t('Google Sheets'),
           key: 'google-sheets',
