@@ -24,7 +24,7 @@ from pytest_mock import MockerFixture
 from sqlalchemy.engine.reflection import Inspector
 from sqlalchemy.engine.url import make_url
 
-from superset.connectors.sqla.models import SqlaTable, TableColumn
+from superset.connectors.sqla.models import Dataset, TableColumn
 from superset.exceptions import OAuth2Error, OAuth2RedirectError
 from superset.models.core import Database
 from superset.sql_parse import Table
@@ -220,7 +220,7 @@ def test_dttm_sql_literal(
     database: Database,
     result: str,
 ) -> None:
-    assert SqlaTable(database=database).dttm_sql_literal(dttm, col) == result
+    assert Dataset(database=database).dttm_sql_literal(dttm, col) == result
 
 
 def test_table_column_database() -> None:
