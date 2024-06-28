@@ -33,11 +33,21 @@ import { QueryFormData, getChartBuildQueryRegistry } from '@superset-ui/core';
  * if a viz needs multiple different result sets.
  */
 export default function buildQuery(formData: QueryFormData) {
-  const { selected_chart: selectedChartString, geom_column: geometryColumn } =
-    formData;
+  const {
+    selected_chart: selectedChartString,
+    geom_column: geometryColumn,
+    extra_form_data: extraFormData,
+  } = formData;
   const selectedChart = JSON.parse(selectedChartString);
   const vizType = selectedChart.viz_type;
   const chartFormData = JSON.parse(selectedChart.params);
+  // Pass extra_form_data to chartFormData so that
+  // dashboard filters will also be applied to the charts
+  // on the map.
+  chartFormData.extra_form_data = {
+    ...chartFormData.extra_form_data,
+    ...extraFormData,
+  };
 
   // adapt groupby property to ensure geometry column always exists
   // and is always at first position

@@ -21,6 +21,7 @@ import buildQuery from '../../src/plugin/buildQuery';
 
 describe('CartodiagramPlugin buildQuery', () => {
   const selectedChartParams = {
+    extra_form_data: {},
     groupby: [],
   };
 
