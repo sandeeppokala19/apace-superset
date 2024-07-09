@@ -1539,6 +1539,7 @@ TALISMAN_CONFIG = {
             "https://apachesuperset.gateway.scarf.sh",
             "https://static.scarf.sh/",
             # "https://avatars.slack-edge.com", # Uncomment when SLACK_ENABLE_AVATARS is True
+            "ows.terrestris.de",
         ],
         "worker-src": ["'self'", "blob:"],
         "connect-src": [
@@ -1569,6 +1570,7 @@ TALISMAN_DEV_CONFIG = {
             "https://apachesuperset.gateway.scarf.sh",
             "https://static.scarf.sh/",
             "https://avatars.slack-edge.com",
+            "ows.terrestris.de",
         ],
         "worker-src": ["'self'", "blob:"],
         "connect-src": [
