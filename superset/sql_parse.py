@@ -1024,7 +1024,10 @@ class ParsedQuery:
 
     def strip_comments(self) -> str:
         if self.strip_comments_sql is None:
-            self.strip_comments_sql = sqlparse.format(self.stripped(), strip_comments=True)
+            self.strip_comments_sql = sqlparse.format(
+                self.stripped(),
+                strip_comments=True
+            )
 
         return self.strip_comments_sql
 
