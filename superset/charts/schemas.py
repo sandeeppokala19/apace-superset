@@ -225,6 +225,7 @@ class ChartPostSchema(Schema):
     external_url = fields.String(allow_none=True)
     uuid = fields.UUID(allow_none=True)
 
+
 class ChartPutSchema(Schema):
     """
     Schema to update or patch a chart

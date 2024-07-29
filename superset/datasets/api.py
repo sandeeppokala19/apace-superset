@@ -154,7 +154,7 @@ class DatasetRestApi(BaseSupersetModelRestApi):
         "metrics.warning_text",
         "normalize_columns",
         "offset",
-        "template_params"
+        "template_params",
     ]
     list_select_columns = list_columns + ["changed_on", "changed_by_fk"]
     order_columns = [
