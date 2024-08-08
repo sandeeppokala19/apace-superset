@@ -483,6 +483,7 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     # Enables Alerts and reports new implementation
     "ALERT_REPORTS": False,
     "ALERT_REPORT_TABS": False,
+    "ALERT_REPORT_SLACK_V2": False,
     "DASHBOARD_RBAC": False,
     "ENABLE_ADVANCED_DATA_TYPES": False,
     # Enabling ALERTS_ATTACH_REPORTS, the system sends email and slack message
@@ -544,6 +545,8 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     # - `GOOGLE_SHEETS_EXPORT_SERVICE_ACCOUNT_JSON_PATH`
     # - `GOOGLE_SHEETS_EXPORT_SHARE_PERMISSIONS`
     "GOOGLE_SHEETS_EXPORT": False,
+    # Set to True to to enable factory resent CLI command
+    "ENABLE_FACTORY_RESET_COMMAND": False,
 }
 
 # ------------------------------
@@ -977,7 +980,12 @@ CELERY_BEAT_SCHEDULER_EXPIRES = timedelta(weeks=1)
 
 class CeleryConfig:  # pylint: disable=too-few-public-methods
     broker_url = "sqla+sqlite:///celerydb.sqlite"
-    imports = ("superset.sql_lab", "superset.tasks.scheduler")
+    imports = (
+        "superset.sql_lab",
+        "superset.tasks.scheduler",
+        "superset.tasks.thumbnails",
+        "superset.tasks.cache",
+    )
     result_backend = "db+sqlite:///celery_results.sqlite"
     worker_prefetch_multiplier = 1
     task_acks_late = False
@@ -1171,7 +1179,6 @@ CONFIG_PATH_ENV_VAR = "SUPERSET_CONFIG_PATH"
 FLASK_APP_MUTATOR = None
 
 # smtp server configuration
-EMAIL_NOTIFICATIONS = False  # all the emails are sent using dryrun
 SMTP_HOST = "localhost"
 SMTP_STARTTLS = True
 SMTP_SSL = False
@@ -1279,7 +1286,16 @@ DB_SQLA_URI_VALIDATOR: Callable[[URL], None] | None = None
 # unsafe SQL functions in SQL Lab and Charts. The keys of the dictionary are the engine
 # names, and the values are sets of disallowed functions.
 DISALLOWED_SQL_FUNCTIONS: dict[str, set[str]] = {
-    "postgresql": {"version", "query_to_xml", "inet_server_addr", "inet_client_addr"},
+    "postgresql": {
+        "database_to_xml",
+        "inet_client_addr",
+        "inet_server_addr",
+        "query_to_xml",
+        "query_to_xml_and_xmlschema",
+        "table_to_xml",
+        "table_to_xml_and_xmlschema",
+        "version",
+    },
     "clickhouse": {"url"},
     "mysql": {"version"},
 }

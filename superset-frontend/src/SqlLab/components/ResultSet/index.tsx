@@ -33,7 +33,7 @@ import { Space } from 'antd';
 import ButtonGroup from 'src/components/ButtonGroup';
 import Alert from 'src/components/Alert';
 import Button from 'src/components/Button';
-import shortid from 'shortid';
+import { nanoid } from 'nanoid';
 import {
   FeatureFlag,
   QueryState,
@@ -258,7 +258,7 @@ const ResultSet = ({
 
   const popSelectStar = (tempSchema: string | null, tempTable: string) => {
     const qe = {
-      id: shortid.generate(),
+      id: nanoid(11),
       name: tempTable,
       autorun: false,
       dbId: query.dbId,
