@@ -28,7 +28,6 @@ import {
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { pick } from 'lodash';
-import { DownOutlined, FileOutlined, GoogleOutlined } from '@ant-design/icons';
 import { Space } from 'antd';
 import ButtonGroup from 'src/components/ButtonGroup';
 import Alert from 'src/components/Alert';
@@ -85,7 +84,6 @@ import Icons from 'src/components/Icons';
 import { Menu } from 'src/components/Menu';
 import { findPermission } from 'src/utils/findPermission';
 
-import { UserWithPermissionsAndRoles } from 'src/types/bootstrapTypes';
 import { prepareCopyToClipboardTabularData } from 'src/utils/common';
 import ExploreCtasResultsButton from '../ExploreCtasResultsButton';
 import ExploreResultsButton from '../ExploreResultsButton';
@@ -105,6 +103,7 @@ export interface ResultSetProps {
   database?: Record<string, any>;
   displayLimit: number;
   height: number;
+  isExportable?: boolean;
   queryId: string;
   search?: boolean;
   showSql?: boolean;
@@ -447,7 +446,7 @@ const ResultSet = ({
     const shouldUseDefaultDropdownAlert =
       limit === defaultQueryLimit && limitingFactor === LimitingFactor.Dropdown;
 
-    if (limitingFactor === LimitingFactor.Query && csv) {
+    if (limitingFactor === LimitingFactor.Query && isExportable) {
       limitMessage = t(
         'The number of rows displayed is limited to %(rows)d by the query',
         { rows },

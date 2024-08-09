@@ -17,7 +17,7 @@
  * under the License.
  */
 import { SupersetClient, t } from '@superset-ui/core';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import Loading from 'src/components/Loading';
