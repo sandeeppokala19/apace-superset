@@ -315,7 +315,7 @@ export default function sqlLabReducer(state = {}, action) {
           const queries = { ...state.queries, [q.id]: q };
           newState = { ...state, queries };
         }
-      } else {
+      } else if (!action.runPreviewOnly) {
         newState.activeSouthPaneTab = action.query.id;
       }
       newState = addToObject(newState, 'queries', action.query);
