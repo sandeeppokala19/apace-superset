@@ -16,7 +16,7 @@
 # under the License.
 import json
 import os
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Union
 
 import celery
 from flask import Flask
@@ -71,22 +71,26 @@ class UIManifestProcessor:
     def register_processor(self, app: Flask) -> None:
         app.template_context_processors[None].append(self.get_manifest)
 
-    def get_manifest(self) -> dict[str, Callable[[str], list[str]]]:
+    def get_manifest(self) -> dict[str, Union[Callable[[str], list[str]], str]]:
         loaded_chunks = set()
+
+        if self.app:
+            assets_prefix = self.app.config["STATIC_ASSETS_PREFIX"]
+        else:
+            assets_prefix = ""
 
         def get_files(bundle: str, asset_type: str = "js") -> list[str]:
             files = self.get_manifest_files(bundle, asset_type)
             filtered_files = [f for f in files if f not in loaded_chunks]
             for f in filtered_files:
                 loaded_chunks.add(f)
-            return filtered_files
+
+            return [f"{assets_prefix}{f}" for f in filtered_files]
 
         return {
             "js_manifest": lambda bundle: get_files(bundle, "js"),
             "css_manifest": lambda bundle: get_files(bundle, "css"),
-            "assets_prefix": self.app.config["STATIC_ASSETS_PREFIX"]
-            if self.app
-            else "",
+            "assets_prefix": assets_prefix,
         }
 
     def parse_manifest_json(self) -> None:
