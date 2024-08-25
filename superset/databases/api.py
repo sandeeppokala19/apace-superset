@@ -125,11 +125,13 @@ from superset.utils.oauth2 import decode_oauth2_state
 from superset.utils.ssh_tunnel import mask_password_info
 from superset.views.base_api import (
     BaseSupersetModelRestApi,
+    RelatedFieldFilter,
     requires_form_data,
     requires_json,
     statsd_metrics,
 )
 from superset.views.error_handling import json_error_response
+from superset.views.filters import BaseFilterRelatedUsers, FilterRelatedOwners
 
 logger = logging.getLogger(__name__)
 
@@ -303,6 +305,13 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
 
     openapi_spec_methods = openapi_spec_methods_override
     """ Overrides GET methods OpenApi descriptions """
+
+    related_field_filters = {
+        "changed_by": RelatedFieldFilter("first_name", FilterRelatedOwners),
+    }
+    base_related_field_filters = {
+        "changed_by": [["id", BaseFilterRelatedUsers, lambda: []]],
+    }
 
     @expose("/<int:pk>/connection", methods=("GET",))
     @protect()
@@ -1150,7 +1159,7 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
         self.incr_stats("init", self.select_star.__name__)
         try:
             result = database.select_star(
-                Table(table_name, schema_name),
+                Table(table_name, schema_name, database.get_default_catalog()),
                 latest_partition=True,
             )
         except NoSuchTableError:
@@ -2265,6 +2274,6 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
         # otherwise the database should have been filtered out
         # in CsvToDatabaseForm
         schemas_allowed_processed = security_manager.get_schemas_accessible_by_user(
-            database, schemas_allowed, True
+            database, database.get_default_catalog(), schemas_allowed, True
         )
         return self.response(200, schemas=schemas_allowed_processed)

@@ -61,6 +61,7 @@ dependencies = [
     "humanize",
     "importlib_metadata",
     "isodate",
+    "jsonpath-ng>=1.6.1, <2",
     "Mako>=1.2.2",
     "markdown>=3.0",
     "msgpack>=1.0.0, <1.1",
@@ -230,6 +231,7 @@ module = "tests.*"
 check_untyped_defs = false
 disallow_untyped_calls = false
 disallow_untyped_defs = false
+disable_error_code = "annotation-unchecked"
 
 [tool.tox]
 legacy_tox_ini = """
