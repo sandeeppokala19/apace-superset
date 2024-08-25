@@ -415,26 +415,66 @@ describe('Native filters', () => {
     });
 
     it('Verify that default value is respected after revisit', () => {
+      cy.intercept('GET', '**/api/v1/chart/data*').as('chartData');
+
       prepareDashboardFilters([
         { name: 'country_name', column: 'country_name', datasetId: 2 },
       ]);
       enterNativeFilterEditModal();
       inputNativeFilterDefaultValue(testItems.filterDefaultValue);
       saveNativeFilterSettings([SAMPLE_CHART]);
+
       cy.get(nativeFilters.filterItem)
         .contains(testItems.filterDefaultValue)
         .should('be.visible');
-      cy.get(dataTestChartName(testItems.topTenChart.name)).within(() => {
-        cy.contains(testItems.filterDefaultValue).should('be.visible');
-        cy.contains(testItems.filterOtherCountry).should('not.exist');
+
+      cy.log('Checking initial chart state');
+
+      cy.retryAssertion(
+        () => {
+          cy.get(dataTestChartName(testItems.topTenChart.name)).within(() => {
+            cy.contains(testItems.filterDefaultValue).should('be.visible');
+            cy.contains(testItems.filterOtherCountry).should('not.exist');
+          });
+        },
+        { timeout: 20000, interval: 1000 },
+      );
+
+      cy.log('Reloading dashboard');
+
+      // Reload the page
+      cy.reload();
+
+      // Wait for the page to finish loading
+      cy.log('Waiting for page to load');
+      cy.window().should('have.property', 'onbeforeunload', null);
+
+      // Check if any part of the dashboard is visible
+      cy.log('Checking for dashboard visibility');
+      cy.get('body').should('not.be.empty');
+      cy.get('.dashboard').should('exist');
+
+      cy.log('Waiting for chart data request');
+
+      // Wait for the chart data request with a longer timeout
+      cy.wait('@chartData', { timeout: 30000 }).then(interception => {
+        cy.log(
+          `Chart data request completed: ${JSON.stringify(interception.response?.statusCode)}`,
+        );
       });
 
-      // reload dashboard
-      cy.reload();
-      cy.get(dataTestChartName(testItems.topTenChart.name)).within(() => {
-        cy.contains(testItems.filterDefaultValue).should('be.visible');
-        cy.contains(testItems.filterOtherCountry).should('not.exist');
-      });
+      cy.log('Checking chart state after reload');
+
+      cy.retryAssertion(
+        () => {
+          cy.get(dataTestChartName(testItems.topTenChart.name)).within(() => {
+            cy.contains(testItems.filterDefaultValue).should('be.visible');
+            cy.contains(testItems.filterOtherCountry).should('not.exist');
+          });
+        },
+        { timeout: 30000, interval: 1000 },
+      );
+
       validateFilterContentOnDashboard(testItems.filterDefaultValue);
     });
 
