@@ -24,7 +24,11 @@ ARG PY_VER=3.10-slim-bookworm
 ARG BUILDPLATFORM=${BUILDPLATFORM:-amd64}
 FROM --platform=${BUILDPLATFORM} node:20-bullseye-slim AS superset-node
 
+ARG ASSET_BASE_URL
+ARG BASE_PATH
 ARG NPM_BUILD_CMD="build"
+ENV ASSET_BASE_URL=${ASSET_BASE_URL:-}
+ENV BASE_PATH=${BASE_PATH:-}
 
 # Somehow we need python3 + build-essential on this side of the house to install node-gyp
 RUN apt-get update -qq \
@@ -46,13 +50,14 @@ RUN --mount=type=bind,target=./package.json,src=./superset-frontend/package.json
     --mount=type=bind,target=./package-lock.json,src=./superset-frontend/package-lock.json \
     npm ci
 
+# This copies the .po files needed for translation
+RUN mkdir -p /app/superset/translations
+COPY superset/translations /app/superset/translations
+
 # Runs the webpack build process
 COPY superset-frontend /app/superset-frontend
 RUN npm run ${BUILD_CMD}
 
-# This copies the .po files needed for translation
-RUN mkdir -p /app/superset/translations
-COPY superset/translations /app/superset/translations
 # Compiles .json files from the .po files, then deletes the .po files
 RUN npm run build-translation
 RUN rm /app/superset/translations/*/LC_MESSAGES/*.po
@@ -62,9 +67,14 @@ RUN rm /app/superset/translations/messages.pot
 # Final lean image...
 ######################################################################
 FROM python:${PY_VER} AS lean
+ARG ASSET_BASE_URL
+ARG BASE_PATH
 
 WORKDIR /app
-ENV LANG=C.UTF-8 \
+
+ENV ASSET_BASE_URL=${ASSET_BASE_URL:-} \
+    BASE_PATH=${BASE_PATH:-} \
+    LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
     SUPERSET_ENV=production \
     FLASK_APP="superset.app:create_app()" \
@@ -129,6 +139,8 @@ CMD ["/usr/bin/run-server.sh"]
 # Dev image...
 ######################################################################
 FROM lean AS dev
+ARG GECKODRIVER_VERSION=v0.33.0 \
+    FIREFOX_VERSION=117.0.1
 
 USER root
 RUN apt-get update -qq \
