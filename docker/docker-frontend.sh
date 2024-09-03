@@ -17,19 +17,23 @@
 #
 set -e
 
+# zstd exe is required by simple-zstd package
+apt-get update
+apt-get install -y zstd
+
 # Packages needed for puppeteer:
 if [ "$PUPPETEER_SKIP_CHROMIUM_DOWNLOAD" = "false" ]; then
-    apt update
     apt install -y chromium
 fi
 
 if [ "$BUILD_SUPERSET_FRONTEND_IN_DOCKER" = "true" ]; then
     echo "Building Superset frontend in dev mode inside docker container"
     cd /app/superset-frontend
-
-    echo "Running `npm install`"
-    npm install
-
+    if [[ ! -d node_modules ]] || [[ "$SUPERSET_FRONTEND_NPM_INSTALL_FORCE" = "true" ]]; then
+        echo "Running 'npm install'"
+        export NODE_OPTIONS=--max_old_space_size=8192
+        npm install
+    fi
     echo "Running frontend"
     npm run dev
 
