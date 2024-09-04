@@ -118,7 +118,11 @@ from superset.views.filters import (
     FilterRelatedOwners,
 )
 
+import time
+
+
 logger = logging.getLogger(__name__)
+
 
 
 def with_dashboard(

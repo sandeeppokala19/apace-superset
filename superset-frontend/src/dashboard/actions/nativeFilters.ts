@@ -52,37 +52,58 @@ export interface SetInScopeStatusOfFilters {
 export const setFilterConfiguration =
   (filterConfig: FilterConfiguration) =>
   async (dispatch: Dispatch, getState: () => any) => {
+    const { id, metadata } = getState().dashboardInfo;
+    const oldFilters = getState().nativeFilters?.filters || {};
+
+    if ((!filterConfig || filterConfig.length === 0) && Object.keys(oldFilters).length === 0) {
+      return;
+    }
+
+    const filterOutExtraKeys = (filter, referenceFilter) => {
+      if (!referenceFilter) return filter;
+      return Object.keys(filter)
+        .filter(key => key in referenceFilter)
+        .reduce((acc, key) => {
+          acc[key] = filter[key];
+          return acc;
+        }, {});
+    };
+
+
+    const mergedFilters = { ...oldFilters };
+
+    filterConfig.forEach(newFilter => {
+      const sanitizedNewFilter = filterOutExtraKeys(newFilter, oldFilters[newFilter.id]);
+      mergedFilters[newFilter.id] = { ...mergedFilters[newFilter.id], ...sanitizedNewFilter };
+    });
+
+    const hasChanges = Object.keys(mergedFilters).some(id => {
+      const oldFilter = oldFilters[id];
+      const mergedFilter = mergedFilters[id];
+      return !oldFilter || JSON.stringify(mergedFilter) !== JSON.stringify(oldFilter);
+    });
+
+    if (!hasChanges) {
+      return;}
+
     dispatch({
       type: SET_FILTER_CONFIG_BEGIN,
-      filterConfig,
+      filterConfig: mergedFilters,
     });
-    const { id, metadata } = getState().dashboardInfo;
-    const oldFilters = getState().nativeFilters?.filters;
 
-    // TODO extract this out when makeApi supports url parameters
-    const updateDashboard = makeApi<
-      Partial<DashboardInfo>,
-      { result: DashboardInfo }
-    >({
+    const updateDashboard = makeApi<Partial<DashboardInfo>, { result: DashboardInfo }>({
       method: 'PUT',
       endpoint: `/api/v1/dashboard/${id}`,
-    });
-
-    const mergedFilterConfig = filterConfig.map(filter => {
-      const oldFilter = oldFilters[filter.id];
-      if (!oldFilter) {
-        return filter;
-      }
-      return { ...oldFilter, ...filter };
     });
 
     try {
       const response = await updateDashboard({
         json_metadata: JSON.stringify({
           ...metadata,
-          native_filter_configuration: mergedFilterConfig,
+          native_filter_configuration: filterConfig,
         }),
       });
+
       dispatch(
         dashboardInfoChanged({
           metadata: JSON.parse(response.result.json_metadata),
@@ -90,19 +111,17 @@ export const setFilterConfiguration =
       );
       dispatch({
         type: SET_FILTER_CONFIG_COMPLETE,
-        filterConfig: mergedFilterConfig,
+        filterConfig: mergedFilters,
       });
-      dispatch(
-        setDataMaskForFilterConfigComplete(mergedFilterConfig, oldFilters),
-      );
+      dispatch(setDataMaskForFilterConfigComplete(filterConfig, oldFilters));
     } catch (err) {
       dispatch({
         type: SET_FILTER_CONFIG_FAIL,
-        filterConfig: mergedFilterConfig,
+        filterConfig: mergedFilters,
       });
       dispatch({
         type: SET_DATA_MASK_FOR_FILTER_CONFIG_FAIL,
-        filterConfig: mergedFilterConfig,
+        filterConfig: mergedFilters,
       });
     }
   };
