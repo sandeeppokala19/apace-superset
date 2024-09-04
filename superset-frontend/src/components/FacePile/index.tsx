@@ -23,6 +23,7 @@ import {
 } from '@superset-ui/core';
 import { Tooltip } from 'src/components/Tooltip';
 import { Avatar } from 'src/components';
+import { ensureBasePath } from 'src/utils/pathUtils';
 import { getRandomColor } from './utils';
 
 interface FacePileProps {
@@ -59,7 +60,7 @@ export default function FacePile({ users, maxCount = 4 }: FacePileProps) {
         const name = `${first_name} ${last_name}`;
         const uniqueKey = `${id}-${first_name}-${last_name}`;
         const color = getRandomColor(uniqueKey, colorList);
-        const avatarUrl = `/api/v1/user/${id}/avatar.png`;
+        const avatarUrl = ensureBasePath(`/api/v1/user/${id}/avatar.png`);
         return (
           <Tooltip key={name} title={name} placement="top">
             <StyledAvatar
