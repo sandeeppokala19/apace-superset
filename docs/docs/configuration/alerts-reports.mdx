@@ -229,16 +229,8 @@ FROM apache/superset:3.1.0
 
 USER root
 
-RUN apt-get update && \
-    apt-get install --no-install-recommends -y firefox-esr
-
-ENV GECKODRIVER_VERSION=0.29.0
-RUN wget -q https://github.com/mozilla/geckodriver/releases/download/v${GECKODRIVER_VERSION}/geckodriver-v${GECKODRIVER_VERSION}-linux64.tar.gz && \
-    tar -x geckodriver -zf geckodriver-v${GECKODRIVER_VERSION}-linux64.tar.gz -O > /usr/bin/geckodriver && \
-    chmod 755 /usr/bin/geckodriver && \
-    rm geckodriver-v${GECKODRIVER_VERSION}-linux64.tar.gz
-
-RUN pip install --no-cache gevent psycopg2 redis
+RUN pip install --no-cache playwright
+RUN playwright install firefox --with-deps
 
 USER superset
 ```
@@ -250,21 +242,8 @@ FROM apache/superset:3.1.0
 
 USER root
 
-RUN apt-get update && \
-    apt-get install -y wget zip libaio1
-
-RUN export CHROMEDRIVER_VERSION=$(curl --silent https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_116) && \
-    wget -O google-chrome-stable_current_amd64.deb -q http://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${CHROMEDRIVER_VERSION}-1_amd64.deb && \
-    apt-get install -y --no-install-recommends ./google-chrome-stable_current_amd64.deb && \
-    rm -f google-chrome-stable_current_amd64.deb
-
-RUN export CHROMEDRIVER_VERSION=$(curl --silent https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_116) && \
-    wget -q https://storage.googleapis.com/chrome-for-testing-public/${CHROMEDRIVER_VERSION}/linux64/chromedriver-linux64.zip && \
-    unzip -j chromedriver-linux64.zip -d /usr/bin && \
-    chmod 755 /usr/bin/chromedriver && \
-    rm -f chromedriver-linux64.zip
-
-RUN pip install --no-cache gevent psycopg2 redis
+RUN pip install --no-cache playwright
+RUN playwright install firefox --with-deps
 
 USER superset
 ```
