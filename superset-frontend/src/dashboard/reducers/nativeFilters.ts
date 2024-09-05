@@ -28,6 +28,7 @@ import {
 } from 'src/dashboard/actions/nativeFilters';
 import { FilterConfiguration, NativeFiltersState } from '@superset-ui/core';
 import { HYDRATE_DASHBOARD } from '../actions/hydrate';
+import { filter } from 'lodash';
 
 export function getInitialState({
   filterConfig,
@@ -37,8 +38,8 @@ export function getInitialState({
   state?: NativeFiltersState;
 }): NativeFiltersState {
   const state: Partial<NativeFiltersState> = {};
-
   const filters = {};
+  console.log(filterConfig)
   if (filterConfig) {
     filterConfig.forEach(filter => {
       const { id } = filter;
