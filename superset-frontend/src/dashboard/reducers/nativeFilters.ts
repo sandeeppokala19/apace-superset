@@ -28,7 +28,6 @@ import {
 } from 'src/dashboard/actions/nativeFilters';
 import { FilterConfiguration, NativeFiltersState } from '@superset-ui/core';
 import { HYDRATE_DASHBOARD } from '../actions/hydrate';
-import { filter } from 'lodash';
 
 export function getInitialState({
   filterConfig,

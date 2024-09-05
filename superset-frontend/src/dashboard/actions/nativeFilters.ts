@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { FilterConfiguration, Filters, makeApi } from '@superset-ui/core';
+import { FilterConfiguration, Filters, makeApi, NativeFiltersState } from '@superset-ui/core';
 import { Dispatch } from 'redux';
 import { cloneDeep } from 'lodash';
 import {
@@ -49,8 +49,11 @@ export interface SetInScopeStatusOfFilters {
   filterConfig: FilterConfiguration;
 }
 
-const simulateFutureState = (filterConfig, prevState) => {
-  const newState = {};
+const simulateFutureState = (
+  filterConfig?: FilterConfiguration,
+  prevState?: NativeFiltersState
+): NativeFiltersState => {
+  const newState: Partial<NativeFiltersState> = {};
   const filters = {};
 
   if (filterConfig) {
@@ -64,7 +67,7 @@ const simulateFutureState = (filterConfig, prevState) => {
   }
 
   newState.focusedFilterId = undefined;
-  return newState;
+  return newState as NativeFiltersState;
 };
 
 export const setFilterConfiguration =
