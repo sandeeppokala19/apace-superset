@@ -38,7 +38,6 @@ export function getInitialState({
 }): NativeFiltersState {
   const state: Partial<NativeFiltersState> = {};
   const filters = {};
-  console.log(filterConfig)
   if (filterConfig) {
     filterConfig.forEach(filter => {
       const { id } = filter;

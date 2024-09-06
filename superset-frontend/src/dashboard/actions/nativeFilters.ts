@@ -16,9 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { FilterConfiguration, Filters, makeApi, NativeFiltersState } from '@superset-ui/core';
+import {
+  FilterConfiguration,
+  Filters,
+  makeApi,
+  NativeFiltersState,
+} from '@superset-ui/core';
 import { Dispatch } from 'redux';
-import { cloneDeep } from 'lodash';
+import { cloneDeep} from 'lodash';
 import {
   SET_DATA_MASK_FOR_FILTER_CONFIG_FAIL,
   setDataMaskForFilterConfigComplete,
@@ -51,7 +56,7 @@ export interface SetInScopeStatusOfFilters {
 
 const simulateFutureState = (
   filterConfig?: FilterConfiguration,
-  prevState?: NativeFiltersState
+  prevState?: NativeFiltersState,
 ): NativeFiltersState => {
   const newState: Partial<NativeFiltersState> = {};
   const filters = {};
@@ -70,21 +75,44 @@ const simulateFutureState = (
   return newState as NativeFiltersState;
 };
 
+const mergeFilters = (
+  oldFilters: Partial<NativeFiltersState>,
+  newFilters: Partial<NativeFiltersState>,
+) => {
+  const mergedFilters = { ...oldFilters };
+  Object.keys(newFilters).forEach(key => {
+    mergedFilters[key] = { ...mergedFilters[key], ...newFilters[key] };
+  });
+
+  return mergedFilters;
+};
+
+const compareStates = (
+  newState: NativeFiltersState,
+  prevState: NativeFiltersState,
+) => {
+  const { filters } = newState;
+  const mergedFilters = mergeFilters(prevState, filters);
+  return JSON.stringify(mergedFilters) === JSON.stringify(prevState);
+};
+
 export const setFilterConfiguration =
   (filterConfig: FilterConfiguration) =>
   async (dispatch: Dispatch, getState: () => any) => {
     const { id, metadata } = getState().dashboardInfo;
     const oldFilters = getState().nativeFilters?.filters;
 
-
-    console.log(oldFilters)
-    console.log(simulateFutureState(filterConfig, oldFilters).filters)
+    const newState = simulateFutureState(filterConfig, oldFilters);
+    if (compareStates(newState, oldFilters)) {
+      console.log('Nothing to change!');
+      return;
+    }
 
     dispatch({
       type: SET_FILTER_CONFIG_BEGIN,
       filterConfig,
     });
-    
+
     // TODO extract this out when makeApi supports url parameters
     const updateDashboard = makeApi<
       Partial<DashboardInfo>,
@@ -109,14 +137,13 @@ export const setFilterConfiguration =
           native_filter_configuration: mergedFilterConfig,
         }),
       });
-      
-      
+
       dispatch(
         dashboardInfoChanged({
           metadata: JSON.parse(response.result.json_metadata),
         }),
       );
-      
+
       dispatch({
         type: SET_FILTER_CONFIG_COMPLETE,
         filterConfig: mergedFilterConfig,
@@ -124,7 +151,6 @@ export const setFilterConfiguration =
       dispatch(
         setDataMaskForFilterConfigComplete(mergedFilterConfig, oldFilters),
       );
-      
     } catch (err) {
       dispatch({
         type: SET_FILTER_CONFIG_FAIL,
@@ -136,7 +162,6 @@ export const setFilterConfiguration =
       });
     }
   };
-
 
 export const setInScopeStatusOfFilters =
   (
