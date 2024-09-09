@@ -23,7 +23,7 @@ import {
   NativeFiltersState,
 } from '@superset-ui/core';
 import { Dispatch } from 'redux';
-import { cloneDeep} from 'lodash';
+import { cloneDeep } from 'lodash';
 import {
   SET_DATA_MASK_FOR_FILTER_CONFIG_FAIL,
   setDataMaskForFilterConfigComplete,
@@ -91,17 +91,24 @@ const compareStates = (
   newState: NativeFiltersState,
   prevState: NativeFiltersState,
   initialOrder: string[],
-  currentOrder: string[]
+  currentOrder: string[],
 ) => {
   const { filters } = newState;
   const mergedFilters = mergeFilters(prevState, filters);
-  const stateComparison = JSON.stringify(mergedFilters) === JSON.stringify(prevState)
-  const orderComparison = JSON.stringify(initialOrder) === JSON.stringify(currentOrder)
+  const stateComparison =
+    JSON.stringify(mergedFilters) === JSON.stringify(prevState);
+  const orderComparison =
+    JSON.stringify(initialOrder) === JSON.stringify(currentOrder);
+  console.log(stateComparison, orderComparison);
   return stateComparison && orderComparison;
 };
 
 export const setFilterConfiguration =
-  (filterConfig: FilterConfiguration, initialOrder: string[], currentOrder: string[]) =>
+  (
+    filterConfig: FilterConfiguration,
+    initialOrder: string[],
+    currentOrder: string[],
+  ) =>
   async (dispatch: Dispatch, getState: () => any) => {
     const { id, metadata } = getState().dashboardInfo;
     const oldFilters = getState().nativeFilters?.filters;

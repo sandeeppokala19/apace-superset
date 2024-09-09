@@ -114,7 +114,11 @@ export interface FiltersConfigModalProps {
   isOpen: boolean;
   initialFilterId?: string;
   createNewOnOpen?: boolean;
-  onSave: (filterConfig: FilterConfiguration, initialOrder: string[], currentOrder: string[]) => Promise<void>;
+  onSave: (
+    filterConfig: FilterConfiguration,
+    initialOrder: string[],
+    currentOrder: string[],
+  ) => Promise<void>;
   onCancel: () => void;
 }
 export const ALLOW_DEPENDENCIES = [
