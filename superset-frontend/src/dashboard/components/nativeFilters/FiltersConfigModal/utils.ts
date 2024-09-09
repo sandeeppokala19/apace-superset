@@ -94,6 +94,7 @@ export const createHandleSave =
   (
     filterConfigMap: Record<string, Filter | Divider>,
     filterIds: string[],
+    initialOrder: string[],
     removedFilters: Record<string, FilterRemoval>,
     saveForm: Function,
     values: NativeFiltersForm,
@@ -147,7 +148,7 @@ export const createHandleSave =
         };
       });
 
-    await saveForm(newFilterConfig);
+    await saveForm(newFilterConfig, initialOrder, filterIds);
   };
 
 export const createHandleRemoveItem =

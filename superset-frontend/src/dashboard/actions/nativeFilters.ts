@@ -90,20 +90,25 @@ const mergeFilters = (
 const compareStates = (
   newState: NativeFiltersState,
   prevState: NativeFiltersState,
+  initialOrder: string[],
+  currentOrder: string[]
 ) => {
   const { filters } = newState;
   const mergedFilters = mergeFilters(prevState, filters);
-  return JSON.stringify(mergedFilters) === JSON.stringify(prevState);
+  const stateComparison = JSON.stringify(mergedFilters) === JSON.stringify(prevState)
+  const orderComparison = JSON.stringify(initialOrder) === JSON.stringify(currentOrder)
+  return stateComparison && orderComparison;
 };
 
 export const setFilterConfiguration =
-  (filterConfig: FilterConfiguration) =>
+  (filterConfig: FilterConfiguration, initialOrder: string[], currentOrder: string[]) =>
   async (dispatch: Dispatch, getState: () => any) => {
     const { id, metadata } = getState().dashboardInfo;
     const oldFilters = getState().nativeFilters?.filters;
 
     const newState = simulateFutureState(filterConfig, oldFilters);
-    if (compareStates(newState, oldFilters)) {
+
+    if (compareStates(newState, oldFilters, initialOrder, currentOrder)) {
       console.log('Nothing to change!');
       return;
     }

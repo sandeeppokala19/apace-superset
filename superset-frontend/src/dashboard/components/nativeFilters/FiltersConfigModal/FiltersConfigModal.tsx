@@ -411,6 +411,7 @@ function FiltersConfigModal({
       createHandleSave(
         updatedFilterConfigMap,
         orderedFilters,
+        initialFilterOrder,
         removedFilters,
         onSave,
         values,

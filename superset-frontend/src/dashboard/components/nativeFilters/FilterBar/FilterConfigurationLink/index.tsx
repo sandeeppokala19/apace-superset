@@ -52,8 +52,8 @@ export const FilterConfigurationLink: FC<FCBProps> = ({
   }, [setOpen]);
 
   const submit = useCallback(
-    async (filterConfig: FilterConfiguration) => {
-      dispatch(await setFilterConfiguration(filterConfig));
+    async (filterConfig: FilterConfiguration, initialOrder: string[], currentOrder: string[]) => {
+      dispatch(await setFilterConfiguration(filterConfig, initialOrder, currentOrder));
       close();
     },
     [dispatch, close],
