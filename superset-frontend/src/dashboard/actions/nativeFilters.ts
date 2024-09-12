@@ -79,11 +79,10 @@ const mergeFilters = (
   oldFilters: Partial<NativeFiltersState>,
   newFilters: Partial<NativeFiltersState>,
 ) => {
-  const mergedFilters = { ...oldFilters };
+  const mergedFilters = {};
   Object.keys(newFilters).forEach(key => {
-    mergedFilters[key] = { ...mergedFilters[key], ...newFilters[key] };
+    mergedFilters[key] = { ...oldFilters[key], ...newFilters[key] };
   });
-
   return mergedFilters;
 };
 
@@ -114,6 +113,8 @@ export const setFilterConfiguration =
     const oldFilters = getState().nativeFilters?.filters;
 
     const newState = simulateFutureState(filterConfig, oldFilters);
+    console.log(JSON.stringify(newState))
+    console.log(JSON.stringify(oldFilters))
 
     if (compareStates(newState, oldFilters, initialOrder, currentOrder)) {
       console.log('Nothing to change!');
