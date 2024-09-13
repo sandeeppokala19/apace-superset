@@ -109,12 +109,12 @@ export const setFilterConfiguration =
     currentOrder: string[],
   ) =>
   async (dispatch: Dispatch, getState: () => any) => {
-    const { id, metadata } = getState().dashboardInfo;
+    const { id } = getState().dashboardInfo;
     const oldFilters = getState().nativeFilters?.filters;
 
     const newState = simulateFutureState(filterConfig, oldFilters);
-    console.log(JSON.stringify(newState))
-    console.log(JSON.stringify(oldFilters))
+    console.log(JSON.stringify(newState));
+    console.log(JSON.stringify(oldFilters));
 
     if (compareStates(newState, oldFilters, initialOrder, currentOrder)) {
       console.log('Nothing to change!');
@@ -126,12 +126,11 @@ export const setFilterConfiguration =
       filterConfig,
     });
 
-    // TODO extract this out when makeApi supports url parameters
     const updateDashboard = makeApi<
       Partial<DashboardInfo>,
       { result: DashboardInfo }
     >({
-      method: 'PUT',
+      method: 'PATCH',
       endpoint: `/api/v1/dashboard/${id}`,
     });
 
@@ -146,11 +145,9 @@ export const setFilterConfiguration =
     try {
       const response = await updateDashboard({
         json_metadata: JSON.stringify({
-          ...metadata,
           native_filter_configuration: mergedFilterConfig,
         }),
       });
-
       dispatch(
         dashboardInfoChanged({
           metadata: JSON.parse(response.result.json_metadata),

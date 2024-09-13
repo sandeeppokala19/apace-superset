@@ -34,6 +34,7 @@ export const DASHBOARD_INFO_UPDATED = 'DASHBOARD_INFO_UPDATED';
 export function dashboardInfoChanged(newInfo: { metadata: any }) {
   return { type: DASHBOARD_INFO_UPDATED, newInfo };
 }
+
 export const SAVE_CHART_CONFIG_BEGIN = 'SAVE_CHART_CONFIG_BEGIN';
 export const SAVE_CHART_CONFIG_COMPLETE = 'SAVE_CHART_CONFIG_COMPLETE';
 export const SAVE_CHART_CONFIG_FAIL = 'SAVE_CHART_CONFIG_FAIL';

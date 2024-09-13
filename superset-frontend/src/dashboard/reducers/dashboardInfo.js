@@ -30,7 +30,10 @@ export default function dashboardStateReducer(state = {}, action) {
       return {
         ...state,
         ...action.newInfo,
-        // server-side compare last_modified_time in second level
+        metadata: {
+          ...state.metadata,
+          ...action.newInfo.metadata,
+        },
         last_modified_time: Math.round(new Date().getTime() / 1000),
       };
     case HYDRATE_DASHBOARD:
