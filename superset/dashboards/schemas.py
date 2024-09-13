@@ -115,6 +115,16 @@ def validate_json_metadata(value: Union[bytes, bytearray, str]) -> None:
     if errors:
         raise ValidationError(errors)
 
+def validate_partial_json_metadata(value: Union[bytes, bytearray, str]) -> None:
+    if not value:
+        return
+    try:
+        value_obj = json.loads(value)
+    except json.JSONDecodeError as ex:
+        raise ValidationError("JSON not valid") from ex
+    errors = DashboardJSONMetadataSchema().validate(value_obj, partial=True)
+    if errors:
+        raise ValidationError(errors)
 
 class DashboardJSONMetadataSchema(Schema):
     # native_filter_configuration is for dashboard-native filters
@@ -162,8 +172,7 @@ class DashboardJSONMetadataSchema(Schema):
             del data["show_native_filters"]
 
         return data
-
-
+    
 class UserSchema(Schema):
     id = fields.Int()
     username = fields.String()
@@ -334,7 +343,6 @@ class DashboardPostSchema(BaseDashboardSchema):
     is_managed_externally = fields.Boolean(allow_none=True, dump_default=False)
     external_url = fields.String(allow_none=True)
 
-
 class DashboardCopySchema(Schema):
     dashboard_title = fields.String(
         metadata={"description": dashboard_title_description},
@@ -352,7 +360,6 @@ class DashboardCopySchema(Schema):
             "description": "Whether or not to also copy all charts on the dashboard"
         }
     )
-
 
 class DashboardPutSchema(BaseDashboardSchema):
     dashboard_title = fields.String(
@@ -397,6 +404,10 @@ class DashboardPutSchema(BaseDashboardSchema):
         fields.Integer(metadata={"description": tags_description}, allow_none=True)
     )
 
+class DashboardPatchSchema(DashboardPutSchema):
+    json_metadata = fields.String(
+        allow_none=True, validate=validate_partial_json_metadata, metadata={"description": json_metadata_description}
+    )
 
 class DashboardScreenshotPostSchema(Schema):
     dataMask = fields.Dict(
