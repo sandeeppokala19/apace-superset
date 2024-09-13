@@ -142,7 +142,7 @@ export const setFilterConfiguration =
       }
       return { ...oldFilter, ...filter };
     });
-    
+
     try {
       const response = await updateDashboard({
         json_metadata: JSON.stringify({

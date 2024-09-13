@@ -55,7 +55,6 @@ class UpdateDashboardCommand(UpdateMixin, BaseCommand):
         # Update tags
         if (tags := self._properties.pop("tags", None)) is not None:
             update_tags(ObjectType.dashboard, self._model.id, self._model.tags, tags)
-
         dashboard = DashboardDAO.update(self._model, self._properties)
         if self._properties.get("json_metadata"):
             DashboardDAO.set_dash_metadata(

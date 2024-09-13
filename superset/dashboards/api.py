@@ -77,6 +77,7 @@ from superset.dashboards.schemas import (
     DashboardCopySchema,
     DashboardDatasetSchema,
     DashboardGetResponseSchema,
+    DashboardPatchSchema,
     DashboardPostSchema,
     DashboardPutSchema,
     EmbeddedDashboardConfigSchema,
@@ -256,6 +257,7 @@ class DashboardRestApi(BaseSupersetModelRestApi):
 
     add_model_schema = DashboardPostSchema()
     edit_model_schema = DashboardPutSchema()
+    patch_model_schema = DashboardPatchSchema()
     chart_entity_response_schema = ChartEntityResponseSchema()
     dashboard_get_response_schema = DashboardGetResponseSchema()
     dashboard_dataset_schema = DashboardDatasetSchema()
@@ -732,7 +734,7 @@ class DashboardRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            item = self.edit_model_patch_schema.load(request.json, partial=True)
+            item = self.patch_model_patch_schema.load(request.json, partial=True)
         except ValidationError as error:
             return self.response_400(message=error.messages)
 
@@ -764,7 +766,6 @@ class DashboardRestApi(BaseSupersetModelRestApi):
                 exc_info=True,
             )
             response = self.response_422(message=str(ex))
-        
         return response
 
 
