@@ -24,6 +24,7 @@ from flask_appbuilder.models.sqla.interface import SQLAInterface
 from sqlalchemy.exc import StatementError
 
 from superset.extensions import db
+from superset.utils import json
 
 T = TypeVar("T", bound=Model)
 
@@ -152,7 +153,7 @@ class BaseDAO(Generic[T]):
         :param item: The object to update
         :param attributes: The attributes associated with the object to update
         """
-
+        
         if not item:
             item = cls.model_cls()  # type: ignore  # pylint: disable=not-callable
 
@@ -162,8 +163,34 @@ class BaseDAO(Generic[T]):
 
         if item not in db.session:
             return db.session.merge(item)
-
+            
         return item  # type: ignore
+    
+    @classmethod
+    def partial_update(
+    cls,
+    item: T | None = None,
+    attributes: dict[str, Any] | None = None,
+) -> T:
+    
+        if not item:
+            item = cls.model_cls()  # type: ignore  # pylint: disable=not-callable
+
+        if attributes:
+            for key, value in attributes.items():
+                if key == "json_metadata":
+                    current_metadata = json.loads(getattr(item, "json_metadata", "{}"))
+                    value = json.loads(value)
+                    for sub_key, sub_value in value.items():
+                        current_metadata[sub_key] = sub_value
+                    setattr(item, "json_metadata", json.dumps(current_metadata))
+                else:
+                    setattr(item, key, value)
+            
+        if item not in db.session:
+            return db.session.merge(item)
+
+        return item
 
     @classmethod
     def delete(cls, items: list[T]) -> None:

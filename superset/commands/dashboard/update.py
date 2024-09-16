@@ -31,6 +31,7 @@ from superset.commands.dashboard.exceptions import (
     DashboardUpdateFailedError,
 )
 from superset.commands.utils import populate_roles, update_tags, validate_tags
+from superset.constants import RouteMethod
 from superset.daos.dashboard import DashboardDAO
 from superset.exceptions import SupersetSecurityException
 from superset.models.dashboard import Dashboard
@@ -42,10 +43,11 @@ logger = logging.getLogger(__name__)
 
 
 class UpdateDashboardCommand(UpdateMixin, BaseCommand):
-    def __init__(self, model_id: int, data: dict[str, Any]):
+    def __init__(self, model_id: int, data: dict[str, Any], method: str):
         self._model_id = model_id
         self._properties = data.copy()
         self._model: Optional[Dashboard] = None
+        self._method = method
 
     @transaction(on_error=partial(on_error, reraise=DashboardUpdateFailedError))
     def run(self) -> Model:
@@ -55,13 +57,15 @@ class UpdateDashboardCommand(UpdateMixin, BaseCommand):
         # Update tags
         if (tags := self._properties.pop("tags", None)) is not None:
             update_tags(ObjectType.dashboard, self._model.id, self._model.tags, tags)
-        dashboard = DashboardDAO.update(self._model, self._properties)
-        if self._properties.get("json_metadata"):
-            DashboardDAO.set_dash_metadata(
-                dashboard,
-                data=json.loads(self._properties.get("json_metadata", "{}")),
-            )
-
+        if (self._method == RouteMethod.PUT):
+            dashboard = DashboardDAO.update(self._model, self._properties)
+            if self._properties.get("json_metadata"):
+                    DashboardDAO.set_dash_metadata(
+                        dashboard,
+                        data=json.loads(self._properties.get("json_metadata", "{}")),
+                    )
+        elif (self._method == RouteMethod.PATCH):
+            dashboard = DashboardDAO.partial_update(self._model, self._properties)
         return dashboard
 
     def validate(self) -> None:

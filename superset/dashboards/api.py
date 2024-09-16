@@ -651,7 +651,8 @@ class DashboardRestApi(BaseSupersetModelRestApi):
         except ValidationError as error:
             return self.response_400(message=error.messages)
         try:
-            changed_model = UpdateDashboardCommand(pk, item).run()
+            method = RouteMethod.PUT
+            changed_model = UpdateDashboardCommand(pk, item, method).run()
             last_modified_time = changed_model.changed_on.replace(
                 microsecond=0
             ).timestamp()
@@ -734,12 +735,13 @@ class DashboardRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            item = self.patch_model_patch_schema.load(request.json, partial=True)
+            item = self.patch_model_schema.load(request.json, partial=True)
         except ValidationError as error:
             return self.response_400(message=error.messages)
 
         try:
-            changed_model = UpdateDashboardCommand(pk, item).run()
+            method = RouteMethod.PATCH
+            changed_model = UpdateDashboardCommand(pk, item, method).run()
             last_modified_time = changed_model.changed_on.replace(
                 microsecond=0
             ).timestamp()
