@@ -125,5 +125,5 @@ class PatchDashboardCommand(UpdateDashboardCommand):
             update_tags(ObjectType.dashboard, self._model.id, self._model.tags, tags)
 
         dashboard = DashboardDAO.patch_update(self._model, self._properties)
-
+        print(dashboard.json_metadata)
         return dashboard

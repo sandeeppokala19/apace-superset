@@ -29,10 +29,15 @@ import {
 import { onSave } from './dashboardState';
 
 export const DASHBOARD_INFO_UPDATED = 'DASHBOARD_INFO_UPDATED';
+export const DASHBOARD_INFO_PATCHED = 'DASHBOARD_INFO_PATCHED';
 
 // updates partially changed dashboard info
 export function dashboardInfoChanged(newInfo: { metadata: any }) {
   return { type: DASHBOARD_INFO_UPDATED, newInfo };
+}
+
+export function dashboardInfoPatched(newInfo: { metadata: any }) {
+  return { type: DASHBOARD_INFO_PATCHED, newInfo };
 }
 
 export const SAVE_CHART_CONFIG_BEGIN = 'SAVE_CHART_CONFIG_BEGIN';

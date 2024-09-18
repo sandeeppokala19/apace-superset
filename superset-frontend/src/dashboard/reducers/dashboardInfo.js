@@ -21,12 +21,20 @@ import {
   DASHBOARD_INFO_UPDATED,
   SET_FILTER_BAR_ORIENTATION,
   SET_CROSS_FILTERS_ENABLED,
+  DASHBOARD_INFO_PATCHED,
 } from '../actions/dashboardInfo';
 import { HYDRATE_DASHBOARD } from '../actions/hydrate';
 
 export default function dashboardStateReducer(state = {}, action) {
   switch (action.type) {
     case DASHBOARD_INFO_UPDATED:
+      return {
+        ...state,
+        ...action.newInfo,
+        // server-side compare last_modified_time in second level
+        last_modified_time: Math.round(new Date().getTime() / 1000),
+      };
+    case DASHBOARD_INFO_PATCHED:
       return {
         ...state,
         ...action.newInfo,

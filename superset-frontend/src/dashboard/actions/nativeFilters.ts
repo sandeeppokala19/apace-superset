@@ -29,7 +29,7 @@ import {
   setDataMaskForFilterConfigComplete,
 } from 'src/dataMask/actions';
 import { HYDRATE_DASHBOARD } from './hydrate';
-import { dashboardInfoChanged } from './dashboardInfo';
+import { dashboardInfoChanged, dashboardInfoPatched } from './dashboardInfo';
 import { DashboardInfo } from '../types';
 
 export const SET_FILTER_CONFIG_BEGIN = 'SET_FILTER_CONFIG_BEGIN';
@@ -147,7 +147,7 @@ export const setFilterConfiguration =
         }),
       });
       dispatch(
-        dashboardInfoChanged({
+        dashboardInfoPatched({
           metadata: JSON.parse(response.result.json_metadata),
         }),
       );
