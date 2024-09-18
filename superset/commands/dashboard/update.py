@@ -60,10 +60,10 @@ class UpdateDashboardCommand(UpdateMixin, BaseCommand):
         
         dashboard = DashboardDAO.update(self._model, self._properties)
         if self._properties.get("json_metadata"):
-                DashboardDAO.set_dash_metadata(
-                    dashboard,
-                    data=json.loads(self._properties.get("json_metadata", "{}")),
-                )
+            DashboardDAO.set_dash_metadata(
+                dashboard,
+                data=json.loads(self._properties.get("json_metadata", "{}")),
+            )
         return dashboard
 
     def validate(self) -> None:
