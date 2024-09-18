@@ -78,13 +78,11 @@ const simulateFutureState = (
 const mergeFilters = (
   oldFilters: Partial<NativeFiltersState>,
   newFilters: Partial<NativeFiltersState>,
-) => {
-  const mergedFilters = {};
-  Object.keys(newFilters).forEach(key => {
-    mergedFilters[key] = { ...oldFilters[key], ...newFilters[key] };
-  });
-  return mergedFilters;
-};
+) =>
+  Object.keys(newFilters).reduce((merged, key) => {
+    merged[key] = { ...oldFilters[key], ...newFilters[key] };
+    return merged;
+  }, {});
 
 const compareStates = (
   newState: NativeFiltersState,
@@ -94,6 +92,8 @@ const compareStates = (
 ) => {
   const { filters } = newState;
   const mergedFilters = mergeFilters(prevState, filters);
+  console.log(JSON.stringify(prevState));
+  console.log(JSON.stringify(mergedFilters));
   const stateComparison =
     JSON.stringify(mergedFilters) === JSON.stringify(prevState);
   const orderComparison =
@@ -113,8 +113,6 @@ export const setFilterConfiguration =
     const oldFilters = getState().nativeFilters?.filters;
 
     const newState = simulateFutureState(filterConfig, oldFilters);
-    console.log(JSON.stringify(newState));
-    console.log(JSON.stringify(oldFilters));
 
     if (compareStates(newState, oldFilters, initialOrder, currentOrder)) {
       console.log('Nothing to change!');
