@@ -48,12 +48,13 @@ from superset.commands.dashboard.exceptions import (
     DashboardForbiddenError,
     DashboardInvalidError,
     DashboardNotFoundError,
+    DashboardPatchFailedError,
     DashboardUpdateFailedError,
 )
 from superset.commands.dashboard.export import ExportDashboardsCommand
 from superset.commands.dashboard.importers.dispatcher import ImportDashboardsCommand
 from superset.commands.dashboard.permalink.create import CreateDashboardPermalinkCommand
-from superset.commands.dashboard.update import UpdateDashboardCommand
+from superset.commands.dashboard.update import UpdateDashboardCommand, PatchDashboardCommand
 from superset.commands.exceptions import TagForbiddenError
 from superset.commands.importers.exceptions import NoValidFilesFoundError
 from superset.commands.importers.v1.utils import get_contents_from_bundle
@@ -651,8 +652,7 @@ class DashboardRestApi(BaseSupersetModelRestApi):
         except ValidationError as error:
             return self.response_400(message=error.messages)
         try:
-            method = RouteMethod.PUT
-            changed_model = UpdateDashboardCommand(pk, item, method).run()
+            changed_model = UpdateDashboardCommand(pk, item).run()
             last_modified_time = changed_model.changed_on.replace(
                 microsecond=0
             ).timestamp()
@@ -740,8 +740,7 @@ class DashboardRestApi(BaseSupersetModelRestApi):
             return self.response_400(message=error.messages)
 
         try:
-            method = RouteMethod.PATCH
-            changed_model = UpdateDashboardCommand(pk, item, method).run()
+            changed_model = PatchDashboardCommand(pk, item).run()
             last_modified_time = changed_model.changed_on.replace(
                 microsecond=0
             ).timestamp()
@@ -760,9 +759,9 @@ class DashboardRestApi(BaseSupersetModelRestApi):
             response = self.response(403, message=str(ex))
         except DashboardInvalidError as ex:
             return self.response_422(message=ex.normalized_messages())
-        except DashboardUpdateFailedError as ex:
+        except DashboardPatchFailedError as ex:
             logger.error(
-                "Error updating model %s: %s",
+                "Error patching model %s: %s",
                 self.__class__.__name__,
                 str(ex),
                 exc_info=True,

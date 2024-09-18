@@ -84,6 +84,10 @@ class UpdateFailedError(CommandException):
     status = 500
     message = "Command update failed"
 
+class PatchFailedError(CommandException):
+    status = 500
+    message = "Command patch failed"
+
 
 class CreateFailedError(CommandException):
     status = 500

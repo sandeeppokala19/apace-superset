@@ -167,7 +167,7 @@ class BaseDAO(Generic[T]):
         return item  # type: ignore
     
     @classmethod
-    def partial_update(
+    def patch_update(
     cls,
     item: T | None = None,
     attributes: dict[str, Any] | None = None,

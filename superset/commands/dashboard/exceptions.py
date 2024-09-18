@@ -26,6 +26,7 @@ from superset.commands.exceptions import (
     ForbiddenError,
     ImportFailedError,
     ObjectNotFoundError,
+    PatchFailedError,
     UpdateFailedError,
 )
 
@@ -56,6 +57,9 @@ class DashboardCreateFailedError(CreateFailedError):
 
 class DashboardUpdateFailedError(UpdateFailedError):
     message = _("Dashboard could not be updated.")
+
+class DashboardPatchFailedError(PatchFailedError):
+    message = _("Dashboard could not be patched.")
 
 
 class DashboardDeleteFailedError(DeleteFailedError):
