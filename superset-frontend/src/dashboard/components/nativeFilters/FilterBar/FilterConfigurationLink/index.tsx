@@ -57,9 +57,11 @@ export const FilterConfigurationLink: FC<FCBProps> = ({
       initialOrder: string[],
       currentOrder: string[],
     ) => {
+      console.time("setFilterConfiguration")
       dispatch(
         await setFilterConfiguration(filterConfig, initialOrder, currentOrder),
       );
+      console.timeEnd("setFilterConfiguration")
       close();
     },
     [dispatch, close],

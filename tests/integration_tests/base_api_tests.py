@@ -48,6 +48,7 @@ class Model1Api(BaseSupersetModelRestApi):
         "export": "read",
         "post": "write",
         "put": "write",
+        "patch": "write",
         "delete": "write",
         "bulk_delete": "write",
         "info": "read",

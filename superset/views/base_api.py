@@ -18,18 +18,21 @@ from __future__ import annotations
 
 import functools
 import logging
-from typing import Any, Callable, cast
+from typing import Any, Callable, Union, cast
 
 from flask import request, Response
 from flask_appbuilder import Model, ModelRestApi
 from flask_appbuilder.api import BaseApi, expose, protect, rison, safe
+from flask_appbuilder.const import API_RESULT_RES_KEY
 from flask_appbuilder.models.filters import BaseFilter, Filters
 from flask_appbuilder.models.sqla.filters import FilterStartsWith
 from flask_appbuilder.models.sqla.interface import SQLAInterface
+from flask_appbuilder.security.decorators import permission_name
 from flask_babel import lazy_gettext as _
-from marshmallow import fields, Schema
+from marshmallow import ValidationError, fields, Schema
 from sqlalchemy import and_, distinct, func
 from sqlalchemy.orm.query import Query
+from sqlalchemy.exc import IntegrityError
 
 from superset.exceptions import InvalidPayloadFormatError
 from superset.extensions import db, event_logger, security_manager, stats_logger_manager
@@ -244,6 +247,7 @@ class BaseSupersetModelRestApi(BaseSupersetApiMixin, ModelRestApi):
         "info": "list",
         "post": "add",
         "put": "edit",
+        "patch": "edit",
         "refresh": "edit",
         "related": "list",
         "related_objects": "list",
@@ -422,6 +426,34 @@ class BaseSupersetModelRestApi(BaseSupersetApiMixin, ModelRestApi):
             extra_rows = db.session.query(datamodel.obj).filter(pk_col.in_(ids)).all()
             result += self._get_result_from_rows(datamodel, extra_rows, column_name)
 
+    def _merge_update_nested_item(
+    self, model_item: Model, data: dict[str, Any], paths: list[list[str]] = None
+) -> dict[str, Any]:
+        """
+        Merges a model with a python data structure for multiple nested fields.
+        
+        :param model_item: The existing model item (instance) from the database.
+        :param data: The incoming data (typically from the PATCH request).
+        :param paths: A list of paths, each representing the location of a nested field.
+        :return: A dictionary with the merged data.
+        """
+        data_item = self.edit_model_schema.dump(model_item, many=False)
+
+        if paths:
+            for path in paths:
+                nested_dict = data_item
+                for key in path[:-1]:
+                    nested_dict = nested_dict.get(key, {})
+
+                if path[-1] in data:
+                    nested_dict[path[-1]] = data[path[-1]]
+        else:
+            for _col in self.edit_columns:
+                if _col not in data:
+                    data[_col] = data_item[_col]
+
+        return data
+
     @event_logger.log_this_with_context(
         action=lambda self, *args, **kwargs: f"{self.__class__.__name__}.info",
         object_ref=False,
@@ -491,6 +523,21 @@ class BaseSupersetModelRestApi(BaseSupersetApiMixin, ModelRestApi):
         duration, response = time_function(super().put_headless, pk)
         self.send_stats_metrics(response, self.put.__name__, duration)
         return response
+    
+    @event_logger.log_this_with_context(
+        action=lambda self, *args, **kwargs: f"{self.__class__.__name__}.patch",
+        object_ref=False,
+        log_to_statsd=False,
+    )
+    @handle_api_exception
+    def patch_overwrite(self, pk: int) -> Response:
+        """
+        Overwrite the PATCH endpoint to have statsd metrics
+        """
+        duration, response = time_function(self.patch_headless, pk)
+        self.send_stats_metrics(response, self.put.__name__, duration)
+        return response
+
 
     @event_logger.log_this_with_context(
         action=lambda self, *args, **kwargs: f"{self.__class__.__name__}.delete",
@@ -655,3 +702,80 @@ class BaseSupersetModelRestApi(BaseSupersetApiMixin, ModelRestApi):
             if item[0] is not None
         ]
         return self.response(200, count=count, result=result)
+    
+    def patch_headless(self, pk: Union[int, str]) -> Response:
+        item = self.datamodel.get(pk, self._base_filters)
+
+        if not request.is_json:
+            return self.response(400, **{"message": "Request is not JSON"})
+
+        if not item:
+            return self.response_404()
+
+        data_payload = request.json.get('data')
+        if not data_payload:
+            return self.response(400, **{"message": "Missing 'data' in request"})
+
+        paths = request.json.get('paths')  
+
+        try:
+            data = self._merge_update_nested_item(item, data_payload, paths)
+            item = self.edit_model_schema.load(data, instance=item, partial=True)
+        except ValidationError as err:
+            return self.response_422(message=err.messages)
+
+        self.pre_update(item)
+
+        try:
+            self.datamodel.edit(item, raise_exception=True)
+            self.post_update(item)
+            return self.response(
+                200,
+                **{API_RESULT_RES_KEY: self.edit_model_schema.dump(item, many=False)},
+            )
+        except IntegrityError as e:
+            return self.response_422(message=str(e.orig))
+
+    @expose("/<pk>", methods=["PATCH"])
+    @protect()
+    @safe
+    @permission_name("patch")
+    def patch(self, pk: Union[str, int]) -> Response:
+        """
+        PATCH item to Model.
+        ---
+        patch:
+        parameters:
+        - in: path
+            schema:
+            type: integer
+            name: pk
+        requestBody:
+            description: Model schema
+            required: true
+            content:
+            application/json:
+                schema:
+                $ref: '#/components/schemas/{{self.__class__.__name__}}.patch'
+        responses:
+            200:
+            description: Item updated
+            content:
+                application/json:
+                schema:
+                    type: object
+                    properties:
+                    result:
+                        $ref: '#/components/schemas/{{self.__class__.__name__}}.patch'
+            400:
+            $ref: '#/components/responses/400'
+            401:
+            $ref: '#/components/responses/401'
+            404:
+            $ref: '#/components/responses/404'
+            422:
+            $ref: '#/components/responses/422'
+            500:
+            $ref: '#/components/responses/500'
+        """
+        return self.patch_headless(pk)

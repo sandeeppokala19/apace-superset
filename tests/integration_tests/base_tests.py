@@ -545,6 +545,31 @@ class SupersetTestCase(TestCase):
         else:
             mock_method.assert_called_once_with("error", func_name)
         return rv
+    
+    def patch_assert_metric(
+        self, uri: str, data: dict[str, Any], func_name: str
+    ) -> Response:
+        """
+        Simple client patch with an extra assertion for statsd metrics
+
+        :param uri: The URI to use for the HTTP PATCH
+        :param data: The JSON data payload to be patched
+        :param func_name: The function name that the HTTP PATCH triggers
+        for the statsd metric assertion
+        :return: HTTP Response
+        """
+        with patch.object(
+            BaseSupersetModelRestApi, "incr_stats", return_value=None
+        ) as mock_method:
+            rv = self.client.patch(uri, json=data)
+        if 200 <= rv.status_code < 400:
+            mock_method.assert_called_once_with("success", func_name)
+        elif 400 <= rv.status_code < 500:
+            mock_method.assert_called_once_with("warning", func_name)
+        else:
+            mock_method.assert_called_once_with("error", func_name)
+        return rv
+
 
     @classmethod
     def get_dttm(cls):
