@@ -28,6 +28,7 @@ import {
   SET_DATA_MASK_FOR_FILTER_CONFIG_FAIL,
   setDataMaskForFilterConfigComplete,
 } from 'src/dataMask/actions';
+import { areArraysShallowEqual, areObjectsEqual } from 'src/reduxUtils';
 import { HYDRATE_DASHBOARD } from './hydrate';
 import { dashboardInfoChanged, dashboardInfoPatched } from './dashboardInfo';
 import { DashboardInfo } from '../types';
@@ -79,10 +80,13 @@ const mergeFilters = (
   oldFilters: Partial<NativeFiltersState>,
   newFilters: Partial<NativeFiltersState>,
 ) =>
-  Object.keys(newFilters).reduce((merged, key) => {
-    merged[key] = { ...oldFilters[key], ...newFilters[key] };
-    return merged;
-  }, {});
+  Object.keys(newFilters).reduce(
+    (merged, key) => ({
+      ...merged,
+      [key]: { ...oldFilters[key], ...newFilters[key] },
+    }),
+    {},
+  );
 
 const compareStates = (
   newState: NativeFiltersState,
@@ -94,10 +98,10 @@ const compareStates = (
   const mergedFilters = mergeFilters(prevState, filters);
   console.log(JSON.stringify(prevState));
   console.log(JSON.stringify(mergedFilters));
-  const stateComparison =
-    JSON.stringify(mergedFilters) === JSON.stringify(prevState);
-  const orderComparison =
-    JSON.stringify(initialOrder) === JSON.stringify(currentOrder);
+  const stateComparison = areObjectsEqual(mergedFilters, prevState, {
+    ignoreUndefined: true,
+  });
+  const orderComparison = areArraysShallowEqual(initialOrder, currentOrder);
   console.log(stateComparison, orderComparison);
   return stateComparison && orderComparison;
 };
