@@ -535,7 +535,7 @@ class BaseSupersetModelRestApi(BaseSupersetApiMixin, ModelRestApi):
         Overwrite the PATCH endpoint to have statsd metrics
         """
         duration, response = time_function(self.patch_headless, pk)
-        self.send_stats_metrics(response, self.put.__name__, duration)
+        self.send_stats_metrics(response, self.patch.__name__, duration)
         return response
 
 

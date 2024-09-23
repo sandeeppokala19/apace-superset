@@ -84,6 +84,12 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
         "json_metadata": '{"refresh_frequency": 30, "timed_refresh_immune_slices": [], "expanded_slices": {}, "color_scheme": "", "label_colors": {}, "shared_label_colors": {}, "color_scheme_domain": [], "cross_filters_enabled": false}',
         "published": False,
     }
+    dashboard_patch_data = {
+        "dashboard_title": "title1_changed",
+        "slug": "slug1_changed",
+        "json_metadata": '{"refresh_frequency": 60}',
+        "published": False,
+    }
 
     @pytest.fixture()
     def create_dashboards(self):
@@ -1702,6 +1708,74 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
         self.assertEqual(model.owners, [admin])
         self.assertEqual(model.roles, [admin_role])
 
+        db.session.delete(model)
+        db.session.commit()
+
+    def test_patch_dashboard(self):
+        """
+        Dashboard API: Test patch
+        """
+        admin = self.get_user("admin")
+        admin_role = self.get_role("Admin")
+        dashboard_id = self.insert_dashboard(
+            "title1", "slug1", [admin.id], roles=[admin_role.id]
+        ).id
+        self.login(ADMIN_USERNAME)
+        uri = f"api/v1/dashboard/{dashboard_id}"
+        rv = self.patch_assert_metric(uri, self.dashboard_data, "patch")
+        self.assertEqual(rv.status_code, 200)
+        model = db.session.query(Dashboard).get(dashboard_id)
+        self.assertEqual(model.dashboard_title, self.dashboard_data["dashboard_title"])
+        self.assertEqual(model.slug, self.dashboard_data["slug"])
+        self.assertEqual(model.position_json, self.dashboard_data["position_json"])
+        self.assertEqual(model.css, self.dashboard_data["css"])
+        self.assertEqual(model.json_metadata, self.dashboard_data["json_metadata"])
+        self.assertEqual(model.published, self.dashboard_data["published"])
+        self.assertEqual(model.owners, [admin])
+        self.assertEqual(model.roles, [admin_role])
+
+        db.session.delete(model)
+        db.session.commit()
+
+    def test_patch_dashboard_partial(self):
+        """
+        Dashboard API: Test patch with partial data
+        """
+        admin = self.get_user("admin")
+        admin_role = self.get_role("Admin")
+        dashboard_id = self.insert_dashboard(
+            self.dashboard_data["dashboard_title"],
+            self.dashboard_data["slug"],
+            [admin.id],
+            roles=[admin_role.id]
+        ).id
+        
+        self.login(ADMIN_USERNAME)
+        uri = f"api/v1/dashboard/{dashboard_id}"
+        initial_model = self.patch_assert_metric(uri, self.dashboard_data, "patch")
+        rv = self.patch_assert_metric(uri, self.dashboard_patch_data, "patch")
+        
+        self.assertEqual(rv.status_code, 200)
+        
+        model = db.session.query(Dashboard).get(dashboard_id)
+        self.assertEqual(model.dashboard_title, self.dashboard_patch_data["dashboard_title"])
+        self.assertEqual(model.slug, self.dashboard_patch_data["slug"])
+        original_metadata = json.loads(self.dashboard_data["json_metadata"])
+        updated_metadata = json.loads(model.json_metadata)
+        patch_metadata = json.loads(self.dashboard_patch_data["json_metadata"])
+        
+        for key, value in patch_metadata.items():
+            self.assertEqual(updated_metadata.get(key), value)
+        
+        for key, value in original_metadata.items():
+            if key not in patch_metadata:
+                self.assertEqual(updated_metadata.get(key), value)
+        self.assertEqual(model.published, self.dashboard_patch_data["published"])
+        self.assertEqual(model.position_json, self.dashboard_data["position_json"])
+        self.assertEqual(model.css, self.dashboard_data["css"])
+        self.assertEqual(model.owners, [admin])
+        self.assertEqual(model.roles, [admin_role])
+        
         db.session.delete(model)
         db.session.commit()
 

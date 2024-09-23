@@ -168,25 +168,28 @@ class BaseDAO(Generic[T]):
     
     @classmethod
     def patch_update(
-    cls,
-    item: T | None = None,
-    attributes: dict[str, Any] | None = None,
-) -> T:
-    
+        cls,
+        item: T | None = None,
+        attributes: dict[str, Any] | None = None,
+    ) -> T:
         if not item:
             item = cls.model_cls()  # type: ignore  # pylint: disable=not-callable
-
         if attributes:
             for key, value in attributes.items():
+                
                 if key == "json_metadata":
-                    current_metadata = json.loads(getattr(item, "json_metadata", "{}"))
-                    value = json.loads(value)
-                    for sub_key, sub_value in value.items():
-                        current_metadata[sub_key] = sub_value
-                    setattr(item, "json_metadata", json.dumps(current_metadata))
+                    current_metadata_str = getattr(item, "json_metadata", None)
+                    if current_metadata_str:
+                        current_metadata = json.loads(current_metadata_str)
+                        value = json.loads(value)
+                        for sub_key, sub_value in value.items():
+                            current_metadata[sub_key] = sub_value
+                        setattr(item, "json_metadata", json.dumps(current_metadata))
+                    else:
+                        setattr(item, "json_metadata", value)
                 else:
                     setattr(item, key, value)
-            
+
         if item not in db.session:
             return db.session.merge(item)
 
