@@ -17,7 +17,7 @@
 import re
 from typing import Any, Union
 
-from marshmallow import fields, post_dump, post_load, pre_load, Schema
+from marshmallow import fields, post_dump, post_load, pre_load, Schema, validates_schema
 from marshmallow.validate import Length, ValidationError
 
 from superset import security_manager
@@ -408,6 +408,12 @@ class DashboardPatchSchema(DashboardPutSchema):
     json_metadata = fields.String(
         allow_none=True, validate=validate_partial_json_metadata, metadata={"description": json_metadata_description}
     )
+
+    @validates_schema
+    def validate_at_least_one_field(self, data, **kwargs):
+        if not data:
+            raise ValidationError("At least one field must be provided.")
+
 
 class DashboardScreenshotPostSchema(Schema):
     dataMask = fields.Dict(

@@ -1752,7 +1752,7 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
         
         self.login(ADMIN_USERNAME)
         uri = f"api/v1/dashboard/{dashboard_id}"
-        initial_model = self.patch_assert_metric(uri, self.dashboard_data, "patch")
+        self.patch_assert_metric(uri, self.dashboard_data, "patch")
         rv = self.patch_assert_metric(uri, self.dashboard_patch_data, "patch")
         
         self.assertEqual(rv.status_code, 200)
@@ -1779,6 +1779,53 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
         db.session.delete(model)
         db.session.commit()
 
+    def test_patch_dashboard_invalid_data(self):
+        """
+        Dashboard API: Test patch with invalid data
+        """
+        admin = self.get_user("admin")
+        dashboard_id = self.insert_dashboard(
+            self.dashboard_data["dashboard_title"],
+            self.dashboard_data["slug"],
+            [admin.id]
+        ).id
+
+        self.login(ADMIN_USERNAME)
+        uri = f"api/v1/dashboard/{dashboard_id}"
+
+        invalid_patch_data = {
+            "dashboard_title": 12345,  # Invalid type, should be a string
+        }
+
+        rv = self.client.patch(uri, json=invalid_patch_data)
+        self.assertEqual(rv.status_code, 400)
+
+        model = db.session.query(Dashboard).get(dashboard_id)
+        db.session.delete(model)
+        db.session.commit()
+
+    def test_patch_dashboard_with_empty_payload(self):
+        """
+        Dashboard API: Test patch with an empty payload (should fail)
+        """
+        admin = self.get_user("admin")
+        dashboard_id = self.insert_dashboard(
+            self.dashboard_data["dashboard_title"],
+            self.dashboard_data["slug"],
+            [admin.id]
+        ).id
+
+        self.login(ADMIN_USERNAME)
+        uri = f"api/v1/dashboard/{dashboard_id}"
+
+        rv = self.client.patch(uri, json={})
+
+        self.assertEqual(rv.status_code, 400)
+
+        model = db.session.query(Dashboard).get(dashboard_id)
+        db.session.delete(model)
+        db.session.commit()
+    
     def test_dashboard_get_list_no_username(self):
         """
         Dashboard API: Tests that no username is returned
