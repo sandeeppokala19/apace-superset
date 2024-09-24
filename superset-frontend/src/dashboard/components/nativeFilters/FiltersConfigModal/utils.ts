@@ -58,7 +58,6 @@ export const validateForm = async (
     let formValues: NativeFiltersForm;
     try {
       formValues = (await form.validateFields()) as NativeFiltersForm;
-      console.log(formValues);
     } catch (error) {
       // In Jest tests in chain of tests, Ant generate `outOfDate` error so need to catch it here
       if (!error?.errorFields?.length && error?.outOfDate) {

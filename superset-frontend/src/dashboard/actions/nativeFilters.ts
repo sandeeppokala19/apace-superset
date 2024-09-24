@@ -115,7 +115,6 @@ export const setFilterConfiguration =
   async (dispatch: Dispatch, getState: () => any) => {
     const { id } = getState().dashboardInfo;
     const oldFilters = getState().nativeFilters?.filters;
-
     const newState = simulateFutureState(filterConfig, oldFilters);
 
     if (compareStates(newState, oldFilters, initialOrder, currentOrder)) {

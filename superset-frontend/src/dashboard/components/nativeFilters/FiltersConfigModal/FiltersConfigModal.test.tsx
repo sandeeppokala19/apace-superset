@@ -396,6 +396,8 @@ test('deletes a filter', async () => {
           cascadeParentIds: [],
         }),
       ]),
+      expect.any(Array),
+      expect.any(Array),
     ),
   );
 });
@@ -426,17 +428,19 @@ test('deletes a filter including dependencies', async () => {
   await waitFor(() =>
     expect(onSave).toHaveBeenCalledWith(
       expect.arrayContaining([
-        expect.objectContaining({
-          type: 'NATIVE_FILTER',
-          id: 'NATIVE_FILTER-1',
-          cascadeParentIds: [],
-        }),
-        expect.objectContaining({
-          type: 'NATIVE_FILTER',
-          id: 'NATIVE_FILTER-3',
-          cascadeParentIds: [],
-        }),
-      ]),
-    ),
+          expect.objectContaining({
+            id: 'NATIVE_FILTER-1',
+            cascadeParentIds: [],
+            type: 'NATIVE_FILTER',
+          }),
+          expect.objectContaining({
+            id: 'NATIVE_FILTER-3',
+            cascadeParentIds: [],
+            type: 'NATIVE_FILTER',
+          }),
+        ]),
+        expect.any(Array),
+        expect.any(Array),
+    )
   );
 });
