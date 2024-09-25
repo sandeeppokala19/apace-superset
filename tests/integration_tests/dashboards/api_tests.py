@@ -1825,7 +1825,7 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
         model = db.session.query(Dashboard).get(dashboard_id)
         db.session.delete(model)
         db.session.commit()
-    
+        
     def test_dashboard_get_list_no_username(self):
         """
         Dashboard API: Tests that no username is returned

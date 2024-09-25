@@ -117,11 +117,12 @@ export const setFilterConfiguration =
     const oldFilters = getState().nativeFilters?.filters;
     const newState = simulateFutureState(filterConfig, oldFilters);
 
+    console.time("compareStates")
     if (compareStates(newState, oldFilters, initialOrder, currentOrder)) {
       console.log('Nothing to change!');
       return;
     }
-
+    console.timeEnd("compareStates")
     dispatch({
       type: SET_FILTER_CONFIG_BEGIN,
       filterConfig,
