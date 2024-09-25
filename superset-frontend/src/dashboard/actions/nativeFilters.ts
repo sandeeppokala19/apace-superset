@@ -32,6 +32,7 @@ import { areArraysShallowEqual, areObjectsEqual } from 'src/reduxUtils';
 import { HYDRATE_DASHBOARD } from './hydrate';
 import { dashboardInfoChanged, dashboardInfoPatched } from './dashboardInfo';
 import { DashboardInfo } from '../types';
+import { detectFilterChanges } from './patch_alternative'
 
 export const SET_FILTER_CONFIG_BEGIN = 'SET_FILTER_CONFIG_BEGIN';
 export interface SetFilterConfigBegin {
@@ -96,8 +97,8 @@ const compareStates = (
 ) => {
   const { filters } = newState;
   const mergedFilters = mergeFilters(prevState, filters);
-  console.log(JSON.stringify(prevState));
-  console.log(JSON.stringify(mergedFilters));
+  // console.log(JSON.stringify(prevState));
+  // console.log(JSON.stringify(mergedFilters));
   const stateComparison = areObjectsEqual(mergedFilters, prevState, {
     ignoreUndefined: true,
   });
@@ -117,6 +118,15 @@ export const setFilterConfiguration =
     const oldFilters = getState().nativeFilters?.filters;
     const newState = simulateFutureState(filterConfig, oldFilters);
 
+    const mergedFilterConfigs = filterConfig.map(filter => {
+      const oldFilter = oldFilters[filter.id];
+      if (!oldFilter) {
+        return filter;
+      }
+      return { ...oldFilter, ...filter };
+    });
+    console.log(detectFilterChanges(mergedFilterConfigs, oldFilters, initialOrder, currentOrder));
+  
     console.time("compareStates")
     if (compareStates(newState, oldFilters, initialOrder, currentOrder)) {
       console.log('Nothing to change!');
