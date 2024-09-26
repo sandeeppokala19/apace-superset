@@ -118,14 +118,14 @@ export const setFilterConfiguration =
     const oldFilters = getState().nativeFilters?.filters;
     const newState = simulateFutureState(filterConfig, oldFilters);
 
-    const mergedFilterConfigs = filterConfig.map(filter => {
-      const oldFilter = oldFilters[filter.id];
-      if (!oldFilter) {
-        return filter;
-      }
-      return { ...oldFilter, ...filter };
-    });
-    console.log(detectFilterChanges(mergedFilterConfigs, oldFilters, initialOrder, currentOrder));
+    // const mergedFilterConfigs = filterConfig.map(filter => {
+    //   const oldFilter = oldFilters[filter.id];
+    //   if (!oldFilter) {
+    //     return filter;
+    //   }
+    //   return { ...oldFilter, ...filter };
+    // });
+    // console.log(detectFilterChanges(mergedFilterConfigs, oldFilters, initialOrder, currentOrder));
   
     console.time("compareStates")
     if (compareStates(newState, oldFilters, initialOrder, currentOrder)) {

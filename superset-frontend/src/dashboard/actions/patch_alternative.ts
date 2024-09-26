@@ -1,5 +1,5 @@
 import { FilterConfiguration } from "@superset-ui/core";
-import { areArraysShallowEqual } from "src/reduxUtils";
+import { areArraysShallowEqual, areObjectsEqual } from "src/reduxUtils";
 
 // Memoization function to cache comparisons
 const compareMemo = (function() {
@@ -11,25 +11,37 @@ const compareMemo = (function() {
       return cache.get(cacheKey);
     }
 
-    // Handle undefined values: ignore comparison if both are undefined
-    if (oldValue === undefined && newValue === undefined) {
-      cache.set(cacheKey, true);
-      return true;
-    }
+    const isEqual = (function() {
+      if (oldValue === undefined && newValue === undefined) {
+        return true;
+      } 
+      if (Array.isArray(oldValue) && Array.isArray(newValue)) {
+        if (areArraysShallowEqual(oldValue, newValue)) {
+          return true;
+        }
 
-    // Handle empty arrays comparison: if both are empty arrays, consider them equal
-    if (Array.isArray(oldValue) && Array.isArray(newValue) && oldValue.length === 0 && newValue.length === 0) {
-      cache.set(cacheKey, true);
-      return true;
-    }
+        return oldValue.length === newValue.length && oldValue.every((item, index) => {
+          const newItem = newValue[index];
+          if (typeof item === 'object' && item !== null) {
+            return areObjectsEqual(item, newItem);
+          } else {
+            return item === newItem;
+          }
+        });
+      } 
+      if (typeof oldValue === 'object' && oldValue !== null && typeof newValue === 'object' && newValue !== null) {
+        return areObjectsEqual(oldValue, newValue, { ignoreUndefined: false, ignoreNull: false });
+      } 
+      return oldValue === newValue;
+    })();
 
-    const isEqual = oldValue === newValue;
+    console.log(`Are values equal? ${isEqual}`);
+    
     cache.set(cacheKey, isEqual);
     return isEqual;
   };
 })();
 
-// Recursive function to detect changes, ignoring undefined values
 const getChangedPaths = (oldObject: any, newObject: any, basePath: string = '') => {
   const changes = {};
 
@@ -39,23 +51,19 @@ const getChangedPaths = (oldObject: any, newObject: any, basePath: string = '') 
     const oldValue = oldObject[key];
     const newValue = newObject[key];
 
-    // Ignore comparison if both values are undefined
     if (oldValue === undefined && newValue === undefined) {
       return;
     }
 
-    // If the key doesn't exist in oldObject, consider it a new addition
     if (!(key in oldObject)) {
       changes[newPath] = newValue;
     } 
-    // If it's a nested object, recursively check for changes
     else if (typeof newValue === 'object' && newValue !== null && !Array.isArray(newValue)) {
       const nestedChanges = getChangedPaths(oldValue, newValue, newPath);
       if (Object.keys(nestedChanges).length > 0) {
         Object.assign(changes, nestedChanges);
       }
     } 
-    // If the values are different and not undefined, record the change
     else if (!compareMemo(oldValue, newValue, newPath)) {
       changes[newPath] = newValue;
     }
@@ -64,7 +72,6 @@ const getChangedPaths = (oldObject: any, newObject: any, basePath: string = '') 
   return changes;
 };
 
-// Detects added, modified, deleted, and reordered filters
 export const detectFilterChanges = (
   newConfig: FilterConfiguration,
   oldFilters: Record<string, any>,
