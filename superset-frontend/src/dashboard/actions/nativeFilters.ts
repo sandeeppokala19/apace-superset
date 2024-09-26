@@ -97,8 +97,8 @@ const compareStates = (
 ) => {
   const { filters } = newState;
   const mergedFilters = mergeFilters(prevState, filters);
-  // console.log(JSON.stringify(prevState));
-  // console.log(JSON.stringify(mergedFilters));
+  console.log(prevState);
+  console.log(mergedFilters);
   const stateComparison = areObjectsEqual(mergedFilters, prevState, {
     ignoreUndefined: true,
   });
@@ -118,14 +118,16 @@ export const setFilterConfiguration =
     const oldFilters = getState().nativeFilters?.filters;
     const newState = simulateFutureState(filterConfig, oldFilters);
 
-    // const mergedFilterConfigs = filterConfig.map(filter => {
-    //   const oldFilter = oldFilters[filter.id];
-    //   if (!oldFilter) {
-    //     return filter;
-    //   }
-    //   return { ...oldFilter, ...filter };
-    // });
-    // console.log(detectFilterChanges(mergedFilterConfigs, oldFilters, initialOrder, currentOrder));
+    const mergedFilterConfigs = filterConfig.map(filter => {
+      const oldFilter = oldFilters[filter.id];
+      if (!oldFilter) {
+        return filter;
+      }
+      const clonedOldFilter = cloneDeep(oldFilter);
+      const clonedFilter = cloneDeep(filter);    
+      return Object.assign({}, clonedOldFilter, clonedFilter);
+    });
+    console.log(detectFilterChanges(mergedFilterConfigs, oldFilters, initialOrder, currentOrder));
   
     console.time("compareStates")
     if (compareStates(newState, oldFilters, initialOrder, currentOrder)) {
