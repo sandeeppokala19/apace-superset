@@ -1,7 +1,6 @@
 import { FilterConfiguration } from "@superset-ui/core";
 import { areArraysShallowEqual, areObjectsEqual } from "src/reduxUtils";
 
-// Memoization function to cache comparisons
 const compareMemo = (function() {
   const cache = new Map();
 
@@ -114,4 +113,35 @@ export const detectFilterChanges = (
   }
   console.timeEnd("alternative_function")
   return changes;
+};
+
+export const preparePayload = (
+  filterChanges: {
+    added: any[],
+    modified: Record<string, any>,
+    deleted: string[],
+    reordered: string[],
+  }
+) => {
+  const payload: any = {
+    native_filter_configuration: {},
+  };
+
+  if (filterChanges.added.length > 0) {
+    payload.native_filter_configuration.added = filterChanges.added;
+  }
+
+  if (Object.keys(filterChanges.modified).length > 0) {
+    payload.native_filter_configuration.modified = filterChanges.modified;
+  }
+
+  if (filterChanges.deleted.length > 0) {
+    payload.native_filter_configuration.deleted = filterChanges.deleted;
+  }
+
+  if (filterChanges.reordered.length > 0) {
+    payload.native_filter_configuration.reorder = filterChanges.reordered;
+  }
+
+  return payload;
 };

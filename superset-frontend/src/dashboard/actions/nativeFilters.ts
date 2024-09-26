@@ -32,7 +32,7 @@ import { areArraysShallowEqual, areObjectsEqual } from 'src/reduxUtils';
 import { HYDRATE_DASHBOARD } from './hydrate';
 import { dashboardInfoChanged, dashboardInfoPatched } from './dashboardInfo';
 import { DashboardInfo } from '../types';
-import { detectFilterChanges } from './patch_alternative'
+import { detectFilterChanges, preparePayload } from './patch_alternative'
 
 export const SET_FILTER_CONFIG_BEGIN = 'SET_FILTER_CONFIG_BEGIN';
 export interface SetFilterConfigBegin {
@@ -127,8 +127,9 @@ export const setFilterConfiguration =
       const clonedFilter = cloneDeep(filter);    
       return Object.assign({}, clonedOldFilter, clonedFilter);
     });
-    console.log(detectFilterChanges(mergedFilterConfigs, oldFilters, initialOrder, currentOrder));
-  
+    const filterChanges = detectFilterChanges(mergedFilterConfigs, oldFilters, initialOrder, currentOrder);
+    console.log(filterChanges)
+    console.log(preparePayload(filterChanges))
     console.time("compareStates")
     if (compareStates(newState, oldFilters, initialOrder, currentOrder)) {
       console.log('Nothing to change!');
