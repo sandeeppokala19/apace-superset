@@ -159,6 +159,35 @@ function FiltersConfigModal({
   const filterConfig = useFilterConfiguration();
   const filterConfigMap = useFilterConfigMap();
 
+  // this state contains the changes that we'll be sent through the PATCH endpoint
+  const [filterChanges, setFilterChanges] = useState({
+    added: [],
+    modified: {},
+    deleted: [],
+    reordered: [],
+  });
+
+
+  const handleModifyFilter = (filterId, updatedFilterData) => {
+    setFilterChanges((prevState) => {
+      const newState = {
+        ...prevState,
+        modified: {
+          ...prevState.modified,
+          [filterId]: {
+            ...prevState.modified[filterId],  // Merge previous modifications if any
+            ...updatedFilterData,  // Add or update the new modifications
+          },
+        },
+      };
+  
+      // Print the updated state for debugging
+      console.log("Updated filterChanges state:", newState);
+  
+      return newState;
+    });
+  };
+
   // new filter ids belong to filters have been added during
   // this configuration session, and only exist in the form state until we submit.
   const [newFilterIds, setNewFilterIds] = useState<string[]>(
@@ -409,7 +438,7 @@ function FiltersConfigModal({
     );
 
     handleErroredFilters();
-
+    console.log(values)
     if (values) {
       const updatedFilterConfigMap = cleanDeletedParents(values);
       createHandleSave(
@@ -525,6 +554,7 @@ function FiltersConfigModal({
   const handleValuesChange = useMemo(
     () =>
       debounce((changes: any, values: NativeFiltersForm) => {
+        console.log(JSON.stringify(changes))
         const didChangeFilterName =
           changes.filters &&
           Object.values(changes.filters).some(
@@ -535,6 +565,17 @@ function FiltersConfigModal({
           Object.values(changes.filters).some(
             (filter: any) => filter.title && filter.title !== null,
           );
+
+        // Track modified filters
+        if (changes.filters) {
+          // Loop through the changed filters
+          Object.keys(changes.filters).forEach((filterId) => {
+            const updatedFields = changes.filters[filterId];
+  
+            // Handle the modified filter by updating its state
+            handleModifyFilter(filterId, updatedFields);
+          });
+        }
         if (didChangeFilterName || didChangeSectionTitle) {
           // we only need to set this if a name/title changed
           setFormValues(values);
