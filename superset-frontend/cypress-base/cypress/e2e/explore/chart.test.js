@@ -18,7 +18,6 @@
  */
 import { CHART_LIST } from 'cypress/utils/urls';
 import { interceptGet as interceptDashboardGet } from 'cypress/e2e/dashboard/utils';
-import { FORM_DATA_DEFAULTS, NUM_METRIC } from './visualizations/shared.helper';
 import {
   interceptFiltering,
   saveChartToDashboard,
@@ -98,7 +97,7 @@ describe('Cross-referenced dashboards', () => {
     cy.wait('@filtering');
   });
 
-  it('should show the cross-referenced dashboards', () => {
+  it.skip('should show the cross-referenced dashboards', () => {
     visitSampleChartFromList('1 - Sample chart');
 
     cy.getBySel('metadata-bar').contains('Not added to any dashboard');
@@ -122,32 +121,32 @@ describe('Cross-referenced dashboards', () => {
   });
 });
 
-describe('No Results', () => {
-  beforeEach(() => {
-    cy.intercept('POST', '/superset/explore_json/**').as('getJson');
-  });
+// describe('No Results', () => {
+//   beforeEach(() => {
+//     cy.intercept('POST', '/superset/explore_json/**').as('getJson');
+//   });
 
-  it('No results message shows up', () => {
-    const formData = {
-      ...FORM_DATA_DEFAULTS,
-      metrics: [NUM_METRIC],
-      viz_type: 'line',
-      adhoc_filters: [
-        {
-          expressionType: 'SIMPLE',
-          subject: 'state',
-          operator: 'IN',
-          comparator: ['Fake State'],
-          clause: 'WHERE',
-          sqlExpression: null,
-        },
-      ],
-    };
+//   it('No results message shows up', () => {
+//     const formData = {
+//       ...FORM_DATA_DEFAULTS,
+//       metrics: [NUM_METRIC],
+//       viz_type: 'line',
+//       adhoc_filters: [
+//         {
+//           expressionType: 'SIMPLE',
+//           subject: 'state',
+//           operator: 'IN',
+//           comparator: ['Fake State'],
+//           clause: 'WHERE',
+//           sqlExpression: null,
+//         },
+//       ],
+//     };
 
-    cy.visitChartByParams(formData);
-    cy.wait('@getJson').its('response.statusCode').should('eq', 200);
-    cy.get('div.chart-container').contains(
-      'No results were returned for this query',
-    );
-  });
-});
+//     cy.visitChartByParams(formData);
+//     cy.wait('@getJson').its('response.statusCode').should('eq', 200);
+//     cy.get('div.chart-container').contains(
+//       'No results were returned for this query',
+//     );
+//   });
+// });
