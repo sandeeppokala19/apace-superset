@@ -83,6 +83,7 @@ const propTypes = {
   datasetsStatus: PropTypes.oneOf(['loading', 'error', 'complete']),
   isInView: PropTypes.bool,
   emitCrossFilters: PropTypes.bool,
+  isDashboardHydrated: PropTypes.bool,
 };
 
 const defaultProps = {
@@ -409,16 +410,20 @@ class Chart extends Component {
       emitCrossFilters,
       logEvent,
     } = this.props;
-
+    // Controlling the status of a Chart based on Dashboard hydration
+    const { isDashboardHydrated } = this.props;
+    const { queriesResponse, chartUpdateEndTime, chartStatus } = chart;
+    const controlledChartStatus = isDashboardHydrated ? chartStatus : 'loading';
+    const { triggerQuery } = chart;
     const { width } = this.state;
+    const isLoading = controlledChartStatus === 'loading';
+    
     // this prevents throwing in the case that a gridComponent
     // references a chart that is not associated with the dashboard
-    if (!chart || !slice) {
+    if ((!chart || !slice) && isDashboardHydrated) {
       return <MissingChart height={this.getChartHeight()} />;
     }
 
-    const { queriesResponse, chartUpdateEndTime, chartStatus } = chart;
-    const isLoading = chartStatus === 'loading';
     // eslint-disable-next-line camelcase
     const isCached = queriesResponse?.map(({ is_cached }) => is_cached) || [];
     const cachedDttm =
@@ -431,8 +436,8 @@ class Chart extends Component {
         className="chart-slice"
         data-test="chart-grid-component"
         data-test-chart-id={id}
-        data-test-viz-type={slice.viz_type}
-        data-test-chart-name={slice.slice_name}
+        data-test-viz-type={slice?.viz_type}
+        data-test-chart-name={slice?.slice_name}
       >
         <SliceHeader
           innerRef={this.setHeaderRef}
@@ -465,7 +470,7 @@ class Chart extends Component {
           addDangerToast={addDangerToast}
           handleToggleFullSize={handleToggleFullSize}
           isFullSize={isFullSize}
-          chartStatus={chart.chartStatus}
+          chartStatus={controlledChartStatus}
           formData={formData}
           width={width}
           height={this.getHeaderHeight()}
@@ -478,7 +483,7 @@ class Chart extends Component {
           and
              https://github.com/apache/superset/pull/23862
         */}
-        {isExpanded && slice.description_markeddown && (
+        {isExpanded && slice?.description_markeddown && (
           <div
             className="slice_description bs-callout bs-callout-default"
             ref={this.setDescriptionRef}
@@ -490,7 +495,7 @@ class Chart extends Component {
 
         <ChartWrapper
           className={cx('dashboard-chart')}
-          aria-label={slice.description}
+          aria-label={slice?.description}
         >
           {isLoading && (
             <ChartOverlay
@@ -507,10 +512,10 @@ class Chart extends Component {
             addFilter={this.changeFilter}
             onFilterMenuOpen={this.handleFilterMenuOpen}
             onFilterMenuClose={this.handleFilterMenuClose}
-            annotationData={chart.annotationData}
-            chartAlert={chart.chartAlert}
+            annotationData={chart?.annotationData}
+            chartAlert={chart?.chartAlert}
             chartId={id}
-            chartStatus={chartStatus}
+            chartStatus={controlledChartStatus}
             datasource={datasource}
             dashboardId={dashboardId}
             initialValues={initialValues}
@@ -521,8 +526,8 @@ class Chart extends Component {
             filterState={filterState}
             queriesResponse={chart.queriesResponse}
             timeout={timeout}
-            triggerQuery={chart.triggerQuery}
-            vizType={slice.viz_type}
+            triggerQuery={triggerQuery}
+            vizType={slice?.viz_type}
             setControlValue={setControlValue}
             postTransformProps={postTransformProps}
             datasetsStatus={datasetsStatus}

@@ -46,13 +46,23 @@ import {
   SET_OVERRIDE_CONFIRM,
   SAVE_DASHBOARD_STARTED,
   SAVE_DASHBOARD_FINISHED,
+  ON_LEAVE_DASHBOARD,
 } from '../actions/dashboardState';
-import { HYDRATE_DASHBOARD } from '../actions/hydrate';
+import {
+  HYDRATE_DASHBOARD,
+  HYDRATE_DASHBOARD_ACTIVETABS,
+  HYDRATE_DASHBOARD_INFO,
+  HYDRATE_DASHBOARD_DATAMASK,
+  HYDRATE_DASHBOARD_INITIAL_LAYOUT,
+} from '../actions/hydrate';
 
 export default function dashboardStateReducer(state = {}, action) {
   const actionHandlers = {
+    [HYDRATE_DASHBOARD_ACTIVETABS]() {
+      return { ...state, activeTabs: action.data };
+    },
     [HYDRATE_DASHBOARD]() {
-      return { ...state, ...action.data.dashboardState };
+      return { ...state, ...action.data.dashboardState, dashboardHydrated: true };
     },
     [UPDATE_CSS]() {
       return { ...state, css: action.css };
@@ -236,6 +246,33 @@ export default function dashboardStateReducer(state = {}, action) {
       return {
         ...state,
         datasetsStatus: action.status,
+      };
+    },
+    [HYDRATE_DASHBOARD_DATAMASK]() {
+      return {
+        ...state,
+        dataMaskHydrated: true,
+      };
+    },
+    [HYDRATE_DASHBOARD_INFO]() {
+      return {
+        ...state,
+        dashboardInfoHydrated: true,
+      };
+    },
+    [HYDRATE_DASHBOARD_INITIAL_LAYOUT] () {
+      return {
+        ...state,
+        dashboardLayoutHydrated: true,
+      };
+    },
+    [ON_LEAVE_DASHBOARD]() {
+      return {
+        ...state,
+        dashboardInfoHydrated: false,
+        dashboardLayoutHydrated: false,
+        dataMaskHydrated: false,
+        dashboardHydrated: false,
       };
     },
   };

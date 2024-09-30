@@ -55,26 +55,122 @@ import updateComponentParentsList from '../util/updateComponentParentsList';
 import { FilterBarOrientation } from '../types';
 
 export const HYDRATE_DASHBOARD = 'HYDRATE_DASHBOARD';
+export const HYDRATE_DASHBOARD_INFO = 'HYDRATE_DASHBOARD_INFO';
+export const HYDRATE_DASHBOARD_DATAMASK = 'HYDRATE_DASHBOARD_DATAMASK';
+export const HYDRATE_DASHBOARD_ACTIVETABS = 'HYDRATE_DASHBOARD_ACTIVETABS';
+export const HYDRATE_DASHBOARD_INITIAL_LAYOUT = 'HYDRATE_DASHBOARD_INITIAL_LAYOUT';
 
+/**
+ * Hydrates the dashboard data mask.
+ * Relies on updated chart configuration from full hydration.
+ */
+export const hydrateDashboardDataMask = (dataMask, dashboardInfo) => dispatch =>
+  dispatch({
+    type: HYDRATE_DASHBOARD_DATAMASK,
+    data: {
+      dataMask,
+      dashboardInfo,
+    },
+  });
+
+export const hydrateDashboardActiveTabs = activeTabs => dispatch =>
+  dispatch({
+    type: HYDRATE_DASHBOARD_ACTIVETABS,
+    data: activeTabs || [],
+  });
+
+/**
+ * Hydrate initial dashboard info.
+ * Only requires dashboard data.
+ * @param {Object} dashboard - dashboard data
+*/
+export const hydrateDashboardInfo = dashboard => (dispatch, getState) => {
+  const { user, common, dashboardState } = getState();
+  const { roles } = user;
+  const { metadata } = dashboard;
+  const crossFiltersEnabled = isCrossFiltersEnabled(
+    metadata.cross_filters_enabled,
+  );
+  // metadata will be processed by hydrateDashboard action
+  const { metadata: _, ...dashboardWithoutMetadata } = dashboard;
+
+  const dashboardInfo = {
+    ...dashboardWithoutMetadata,
+    userId: user.userId ? String(user.userId) : null, // legacy, please use state.user instead
+    dash_edit_perm: canUserEditDashboard(dashboard, user),
+    dash_save_perm: canUserSaveAsDashboard(dashboard, user),
+    dash_share_perm: findPermission(
+      'can_share_dashboard',
+      'Superset',
+      roles,
+    ),
+    superset_can_explore: findPermission(
+      'can_explore',
+      'Superset',
+      roles,
+    ),
+    superset_can_share: findPermission(
+      'can_share_chart',
+      'Superset',
+      roles,
+    ),
+    superset_can_csv: findPermission('can_csv', 'Superset', roles),
+    common: {
+      // legacy, please use state.common instead
+      flash_messages: common?.flash_messages,
+      conf: common?.conf,
+    },
+    filterBarOrientation:
+      (isFeatureEnabled(FeatureFlag.HorizontalFilterBar) &&
+        metadata.filter_bar_orientation) ||
+      FilterBarOrientation.Vertical,
+    crossFiltersEnabled,
+  };
+  
+  return dispatch({
+    type: HYDRATE_DASHBOARD_INFO,
+    data: dashboardInfo,
+  });
+};
+
+const getPositionOrEmptyLayout = (positionData) => positionData && Object.keys(positionData).length > 0
+    ? positionData
+    : getEmptyLayout();
+
+/**
+ * Hydrates the initial layout of the dashboard.
+ * Only requires dashboard data.
+*/
+export const hydrateDashboardInitialLayout = dashboard => dispatch => {
+  const { position_data: positionData } = dashboard;
+  const layout = getPositionOrEmptyLayout(positionData);
+
+  return dispatch({
+    type: HYDRATE_DASHBOARD_INITIAL_LAYOUT,
+    data: layout,
+  });
+}
+
+/**
+ * Full Dashboard Hydration for updated layout, filters, highlights.
+ * Requires datasets and charts data.
+ */
 export const hydrateDashboard =
-  ({ history, dashboard, charts, dataMask, activeTabs }) =>
+  ({ history, dashboard, charts }) =>
   (dispatch, getState) => {
-    const { user, common, dashboardState } = getState();
+    const { user, common, dashboardState, dashboardInfo } = getState();
     const { metadata, position_data: positionData } = dashboard;
     const regularUrlParams = extractUrlParams('regular');
     const reservedUrlParams = extractUrlParams('reserved');
     const editMode = reservedUrlParams.edit === 'true';
+    const canEdit = canUserEditDashboard(dashboard, user);
 
     charts.forEach(chart => {
       // eslint-disable-next-line no-param-reassign
       chart.slice_id = chart.form_data.slice_id;
     });
 
-    // new dash: position_json could be {} or null
-    const layout =
-      positionData && Object.keys(positionData).length > 0
-        ? positionData
-        : getEmptyLayout();
+    const layout = getPositionOrEmptyLayout(positionData);
 
     // create a lookup to sync layout names with slice names
     const chartIdToLayoutId = {};
@@ -241,12 +337,6 @@ export const hydrateDashboard =
       metadata.global_chart_configuration = globalChartConfiguration;
     }
 
-    const { roles } = user;
-    const canEdit = canUserEditDashboard(dashboard, user);
-    const crossFiltersEnabled = isCrossFiltersEnabled(
-      metadata.cross_filters_enabled,
-    );
-
     return dispatch({
       type: HYDRATE_DASHBOARD,
       data: {
@@ -254,39 +344,9 @@ export const hydrateDashboard =
         charts: chartQueries,
         // read-only data
         dashboardInfo: {
-          ...dashboard,
+          ...dashboardInfo,
           metadata,
-          userId: user.userId ? String(user.userId) : null, // legacy, please use state.user instead
-          dash_edit_perm: canEdit,
-          dash_save_perm: canUserSaveAsDashboard(dashboard, user),
-          dash_share_perm: findPermission(
-            'can_share_dashboard',
-            'Superset',
-            roles,
-          ),
-          superset_can_explore: findPermission(
-            'can_explore',
-            'Superset',
-            roles,
-          ),
-          superset_can_share: findPermission(
-            'can_share_chart',
-            'Superset',
-            roles,
-          ),
-          superset_can_csv: findPermission('can_csv', 'Superset', roles),
-          common: {
-            // legacy, please use state.common instead
-            flash_messages: common?.flash_messages,
-            conf: common?.conf,
-          },
-          filterBarOrientation:
-            (isFeatureEnabled(FeatureFlag.HorizontalFilterBar) &&
-              metadata.filter_bar_orientation) ||
-            FilterBarOrientation.Vertical,
-          crossFiltersEnabled,
         },
-        dataMask,
         dashboardFilters,
         nativeFilters,
         dashboardState: {
@@ -311,7 +371,7 @@ export const hydrateDashboard =
           lastModifiedTime: dashboard.changed_on,
           isRefreshing: false,
           isFiltersRefreshing: false,
-          activeTabs: activeTabs || dashboardState?.activeTabs || [],
+          activeTabs: dashboardState?.activeTabs || [],
           datasetsStatus: ResourceStatus.Loading,
         },
         dashboardLayout,

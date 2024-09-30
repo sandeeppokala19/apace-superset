@@ -30,6 +30,9 @@ export default {
   css: '',
   focusedFilterField: null,
   refreshFrequency: 0,
+  dataMaskHydrated: true,
+  dashboardInfoHydrated: true,
+  dashboardHydrated: true,
 };
 
 export const overwriteConfirmMetadata = {

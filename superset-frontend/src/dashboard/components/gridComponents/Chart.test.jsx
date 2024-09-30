@@ -68,6 +68,7 @@ const props = {
   supersetCanExplore: false,
   supersetCanCSV: false,
   supersetCanShare: false,
+  isDashboardHydrated: true,
 };
 
 function setup(overrideProps) {

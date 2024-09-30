@@ -69,6 +69,9 @@ function mapStateToProps({
 }) {
   return {
     dashboardInfo,
+    dashboardInfoHydrated: dashboardState.dashboardInfoHydrated,
+    dashboardHydrated: dashboardState.dashboardHydrated,
+    dashboardLayoutHydrated: dashboardState.dashboardLayoutHydrated,
     undoLength: undoableLayout.past.length,
     redoLength: undoableLayout.future.length,
     layout: undoableLayout.present,
@@ -87,7 +90,7 @@ function mapStateToProps({
     user,
     isStarred: !!dashboardState.isStarred,
     isPublished: !!dashboardState.isPublished,
-    isLoading: isDashboardLoading(charts),
+    isLoading: isDashboardLoading(charts) || !dashboardState.dashboardHydrated,
     hasUnsavedChanges: !!dashboardState.hasUnsavedChanges,
     maxUndoHistoryExceeded: !!dashboardState.maxUndoHistoryExceeded,
     lastModifiedTime: Math.max(

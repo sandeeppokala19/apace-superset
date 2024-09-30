@@ -22,7 +22,7 @@ import {
   SET_FILTER_BAR_ORIENTATION,
   SET_CROSS_FILTERS_ENABLED,
 } from '../actions/dashboardInfo';
-import { HYDRATE_DASHBOARD } from '../actions/hydrate';
+import { HYDRATE_DASHBOARD, HYDRATE_DASHBOARD_INFO } from '../actions/hydrate';
 
 export default function dashboardStateReducer(state = {}, action) {
   switch (action.type) {
@@ -38,6 +38,11 @@ export default function dashboardStateReducer(state = {}, action) {
         ...state,
         ...action.data.dashboardInfo,
         // set async api call data
+      };
+    case HYDRATE_DASHBOARD_INFO:
+      return {
+        ...state,
+        ...action.data,
       };
     case SET_FILTER_BAR_ORIENTATION:
       return {

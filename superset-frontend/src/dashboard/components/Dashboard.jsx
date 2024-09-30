@@ -16,12 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { PureComponent } from 'react';
+import { Component } from 'react';
 import PropTypes from 'prop-types';
 import { isFeatureEnabled, t, FeatureFlag } from '@superset-ui/core';
 
 import { PluginContext } from 'src/components/DynamicPlugins';
-import Loading from 'src/components/Loading';
 import getBootstrapData from 'src/utils/getBootstrapData';
 import getChartIdsFromLayout from '../util/getChartIdsFromLayout';
 import getLayoutComponentFromChartId from '../util/getLayoutComponentFromChartId';
@@ -68,7 +67,7 @@ const defaultProps = {
   userId: '',
 };
 
-class Dashboard extends PureComponent {
+class Dashboard extends Component {
   static contextType = PluginContext;
 
   static onBeforeUnload(hasChanged) {
@@ -90,6 +89,13 @@ class Dashboard extends PureComponent {
     this.appliedFilters = props.activeFilters ?? {};
     this.appliedOwnDataCharts = props.ownDataCharts ?? {};
     this.onVisibilityChange = this.onVisibilityChange.bind(this);
+    this.applyCharts = this.applyCharts.bind(this);
+
+    this.state = {
+      prevActiveFilters: {},
+      prevOwnDataCharts: {},
+      hasTriggered: false,
+    };
   }
 
   componentDidMount() {
@@ -117,11 +123,39 @@ class Dashboard extends PureComponent {
       };
     }
     window.addEventListener('visibilitychange', this.onVisibilityChange);
-    this.applyCharts();
   }
 
   componentDidUpdate() {
     this.applyCharts();
+  }
+
+  shouldComponentUpdate(nextProps) {
+    const { activeFilters, ownDataCharts, chartConfiguration, dashboardState } =
+      this.props;
+    const nextDataMaskHydrated = nextProps.dashboardState.dataMaskHydrated;
+    const nextActiveFilters = nextProps.activeFilters;
+    const nextOwnDataCharts = nextProps.ownDataCharts;
+    const nextChartConfiguration = nextProps.chartConfiguration;
+    const nextDashboardState = nextProps.dashboardState;
+
+    if (
+      nextDataMaskHydrated &&
+      (!areObjectsEqual(dashboardState, nextDashboardState, {
+        ignoreUndefined: true,
+      }) ||
+        !areObjectsEqual(activeFilters, nextActiveFilters, {
+          ignoreUndefined: true,
+        }) ||
+        !areObjectsEqual(ownDataCharts, nextOwnDataCharts, {
+          ignoreUndefined: true,
+        }) ||
+        !areObjectsEqual(chartConfiguration, nextChartConfiguration, {
+          ignoreUndefined: true,
+        }))
+    ) {
+      return true;
+    }
+    return false;
   }
 
   UNSAFE_componentWillReceiveProps(nextProps) {
@@ -158,7 +192,11 @@ class Dashboard extends PureComponent {
     const { hasUnsavedChanges, editMode } = this.props.dashboardState;
 
     const { appliedFilters, appliedOwnDataCharts } = this;
-    const { activeFilters, ownDataCharts, chartConfiguration } = this.props;
+    const { activeFilters, ownDataCharts, chartConfiguration, dashboardState } =
+      this.props;
+
+    const { dataMaskHydrated } = dashboardState;
+
     if (
       isFeatureEnabled(FeatureFlag.DashboardCrossFilters) &&
       !chartConfiguration
@@ -168,16 +206,41 @@ class Dashboard extends PureComponent {
       return;
     }
 
-    if (
-      !editMode &&
-      (!areObjectsEqual(appliedOwnDataCharts, ownDataCharts, {
-        ignoreUndefined: true,
-      }) ||
+    if (dataMaskHydrated) {
+      const hasFilters =
+        Object.keys(activeFilters).length > 0 ||
+        Object.keys(ownDataCharts).length > 0;
+      const hadFilters =
+        Object.keys(this.state.prevActiveFilters).length > 0 ||
+        Object.keys(this.state.prevOwnDataCharts).length > 0;
+      const { hasTriggered } = this.state;
+
+      const filtersChanged =
+        !areObjectsEqual(appliedOwnDataCharts, ownDataCharts, {
+          ignoreUndefined: true,
+        }) ||
         !areObjectsEqual(appliedFilters, activeFilters, {
           ignoreUndefined: true,
-        }))
-    ) {
-      this.applyFilters();
+        });
+
+      // triggers when filters are/were present and are changed/removed
+      if (!editMode && filtersChanged && (hasFilters || hadFilters)) {
+        this.setState({
+          prevActiveFilters: activeFilters,
+          prevOwnDataCharts: ownDataCharts,
+          hasTriggered: true,
+        });
+        this.applyFilters();
+      }
+      // triggers for dashboards with no filters
+      if (
+        (editMode || (!hasFilters && !hadFilters)) &&
+        dashboardState.sliceIds.length > 0 &&
+        !hasTriggered
+      ) {
+        this.setState({ hasTriggered: true });
+        this.refreshCharts(dashboardState.sliceIds);
+      }
     }
 
     if (hasUnsavedChanges) {
@@ -190,6 +253,7 @@ class Dashboard extends PureComponent {
   componentWillUnmount() {
     window.removeEventListener('visibilitychange', this.onVisibilityChange);
     this.props.actions.clearDataMaskState();
+    this.props.actions.onLeaveDashboard();
   }
 
   onVisibilityChange() {
@@ -276,9 +340,6 @@ class Dashboard extends PureComponent {
   }
 
   render() {
-    if (this.context.loading) {
-      return <Loading />;
-    }
     return this.props.children;
   }
 }

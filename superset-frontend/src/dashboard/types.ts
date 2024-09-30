@@ -114,9 +114,15 @@ export type DashboardState = {
     dashboardId: number;
     data: JsonObject;
   };
+  activeTabsHydrated: boolean;
+  dataMaskHydrated: boolean;
+  dashboardInfoHydrated: boolean;
+  dashboardHydrated: boolean;
+  dashboardLayoutHydrated: boolean;
 };
 export type DashboardInfo = {
   id: number;
+  uuid?: string;
   common: {
     conf: JsonObject;
   };
@@ -136,6 +142,7 @@ export type DashboardInfo = {
   };
   crossFiltersEnabled: boolean;
   filterBarOrientation: FilterBarOrientation;
+  slug?: string;
 };
 
 export type ChartsState = { [key: string]: Chart };
