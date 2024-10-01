@@ -44,7 +44,7 @@ import FiltersConfigForm, {
 } from './FiltersConfigForm/FiltersConfigForm';
 import Footer from './Footer/Footer';
 import { useOpenModal, useRemoveCurrentFilter } from './state';
-import { FilterRemoval, NativeFiltersForm } from './types';
+import { FilterChanges, FilterRemoval, NativeFiltersForm } from './types';
 import {
   createHandleSave,
   createHandleRemoveItem,
@@ -132,6 +132,12 @@ const DEFAULT_REMOVED_FILTERS: Record<string, FilterRemoval> = {};
 const DEFAULT_FORM_VALUES: NativeFiltersForm = {
   filters: {},
 };
+const DEFAULT_FILTER_CHANGES: FilterChanges = {
+  added: [],      // Tracks newly added filters
+  modified: {},   // Tracks modified filters and their configurations
+  deleted: [],    // Tracks filters marked for deletion
+  reordered: [],  // Tracks the order of filters if reordering occurs
+};
 
 /**
  * This is the modal to configure all the dashboard-native filters.
@@ -160,13 +166,7 @@ function FiltersConfigModal({
   const filterConfigMap = useFilterConfigMap();
 
   // this state contains the changes that we'll be sent through the PATCH endpoint
-  const [filterChanges, setFilterChanges] = useState({
-    added: [],
-    modified: {},
-    deleted: [],
-    reordered: [],
-  });
-
+  const [filterChanges, setFilterChanges] = useState<FilterChanges>(DEFAULT_FILTER_CHANGES);
 
   const handleModifyFilter = (filterId, updatedFilterData) => {
     setFilterChanges((prevState) => {
@@ -271,6 +271,10 @@ function FiltersConfigModal({
     (type: NativeFilterType) => {
       const newFilterId = generateFilterId(type);
       setNewFilterIds([...newFilterIds, newFilterId]);
+      setFilterChanges(prevState => ({
+        ...prevState,
+        added: [...prevState.added, newFilterId],
+      }));
       setCurrentFilterId(newFilterId);
       setSaveAlertVisible(false);
       setOrderedFilters([...orderedFilters, newFilterId]);
@@ -309,6 +313,7 @@ function FiltersConfigModal({
     setRemovedFilters(DEFAULT_REMOVED_FILTERS);
     setSaveAlertVisible(false);
     setFormValues(DEFAULT_FORM_VALUES);
+    setFilterChanges(DEFAULT_FILTER_CHANGES);
     setErroredFilters(DEFAULT_EMPTY_FILTERS);
     if (filterIds.length > 0) {
       setActiveFilterPanelKey(getActiveFilterPanelKey(filterIds[0]));
@@ -438,9 +443,16 @@ function FiltersConfigModal({
     );
 
     handleErroredFilters();
-    console.log(values)
     if (values) {
       const updatedFilterConfigMap = cleanDeletedParents(values);
+      const newFilters = filterChanges.added.reduce((acc, filterId) => {
+        if (values['filters'][filterId]) {
+          acc[filterId] = values['filters'][filterId];
+        }
+        return acc;
+      }, {});
+      console.log(newFilters)
+      console.log(filterChanges)
       createHandleSave(
         updatedFilterConfigMap,
         orderedFilters,
@@ -481,6 +493,10 @@ function FiltersConfigModal({
     const removed = newOrderedFilter.splice(dragIndex, 1)[0];
     newOrderedFilter.splice(targetIndex, 0, removed);
     setOrderedFilters(newOrderedFilter);
+    setFilterChanges(prevState => ({
+      ...prevState,
+      reordered: newOrderedFilter,
+    }));
   };
 
   const buildDependencyMap = useCallback(() => {
@@ -554,7 +570,6 @@ function FiltersConfigModal({
   const handleValuesChange = useMemo(
     () =>
       debounce((changes: any, values: NativeFiltersForm) => {
-        console.log(JSON.stringify(changes))
         const didChangeFilterName =
           changes.filters &&
           Object.values(changes.filters).some(
@@ -566,13 +581,10 @@ function FiltersConfigModal({
             (filter: any) => filter.title && filter.title !== null,
           );
 
-        // Track modified filters
         if (changes.filters) {
-          // Loop through the changed filters
           Object.keys(changes.filters).forEach((filterId) => {
             const updatedFields = changes.filters[filterId];
   
-            // Handle the modified filter by updating its state
             handleModifyFilter(filterId, updatedFields);
           });
         }

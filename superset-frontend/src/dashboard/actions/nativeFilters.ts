@@ -97,13 +97,10 @@ const compareStates = (
 ) => {
   const { filters } = newState;
   const mergedFilters = mergeFilters(prevState, filters);
-  console.log(prevState);
-  console.log(mergedFilters);
   const stateComparison = areObjectsEqual(mergedFilters, prevState, {
     ignoreUndefined: true,
   });
   const orderComparison = areArraysShallowEqual(initialOrder, currentOrder);
-  console.log(stateComparison, orderComparison);
   return stateComparison && orderComparison;
 };
 
@@ -128,14 +125,11 @@ export const setFilterConfiguration =
       return Object.assign({}, clonedOldFilter, clonedFilter);
     });
     const filterChanges = detectFilterChanges(mergedFilterConfigs, oldFilters, initialOrder, currentOrder);
-    console.log(filterChanges)
-    console.log(preparePayload(filterChanges))
-    console.time("compareStates")
+    
     if (compareStates(newState, oldFilters, initialOrder, currentOrder)) {
       console.log('Nothing to change!');
       return;
     }
-    console.timeEnd("compareStates")
     dispatch({
       type: SET_FILTER_CONFIG_BEGIN,
       filterConfig,

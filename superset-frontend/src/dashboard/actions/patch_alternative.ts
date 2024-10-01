@@ -34,7 +34,6 @@ const compareMemo = (function() {
       return oldValue === newValue;
     })();
 
-    console.log(`Are values equal? ${isEqual}`);
     
     cache.set(cacheKey, isEqual);
     return isEqual;

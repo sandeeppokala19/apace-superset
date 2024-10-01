@@ -60,6 +60,13 @@ export interface NativeFiltersForm {
   changed?: boolean;
 }
 
+export interface FilterChanges {
+  added: string[];
+  modified: Record<string, any>;
+  deleted: string[];   
+  reordered: string[]; 
+}
+
 export type FilterRemoval =
   | null
   | {
