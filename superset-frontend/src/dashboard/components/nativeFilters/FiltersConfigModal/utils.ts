@@ -164,6 +164,9 @@ export const createHandleRemoveItem =
       val: string[] | ((prevState: string[]) => string[]),
     ) => void,
     setSaveAlertVisible: Function,
+    setFilterChanges: (
+      value: ((prevState: any) => any) | any
+    ) => void,
   ) =>
   (filterId: string) => {
     const completeFilterRemoval = (filterId: string) => {
@@ -187,6 +190,10 @@ export const createHandleRemoveItem =
     setRemovedFilters(removedFilters => ({
       ...removedFilters,
       [filterId]: { isPending: true, timerId },
+    }));
+    setFilterChanges(prevState => ({
+      ...prevState,
+      deleted: [...prevState.deleted, filterId],
     }));
     setSaveAlertVisible(false);
   };

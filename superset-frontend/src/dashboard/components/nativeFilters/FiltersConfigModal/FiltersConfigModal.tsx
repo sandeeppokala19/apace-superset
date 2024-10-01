@@ -175,13 +175,12 @@ function FiltersConfigModal({
         modified: {
           ...prevState.modified,
           [filterId]: {
-            ...prevState.modified[filterId],  // Merge previous modifications if any
-            ...updatedFilterData,  // Add or update the new modifications
+            ...prevState.modified[filterId],
+            ...updatedFilterData,  
           },
         },
       };
   
-      // Print the updated state for debugging
       console.log("Updated filterChanges state:", newState);
   
       return newState;
@@ -299,6 +298,7 @@ function FiltersConfigModal({
     setRemovedFilters,
     setOrderedFilters,
     setSaveAlertVisible,
+    setFilterChanges
   );
 
   // After this, it should be as if the modal was just opened fresh.
