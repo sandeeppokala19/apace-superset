@@ -370,44 +370,66 @@ function FiltersConfigModal({
     [canBeUsedAsDependency, filterIds, getFilterTitle],
   );
 
-  const cleanDeletedParents = (values: NativeFiltersForm | null) => {
-    const updatedFilterConfigMap = Object.keys(filterConfigMap).reduce(
-      (acc, key) => {
-        const filter = filterConfigMap[key];
-        const cascadeParentIds = filter.cascadeParentIds?.filter(id =>
-          canBeUsedAsDependency(id),
-        );
-        if (cascadeParentIds) {
-          dispatch(updateCascadeParentIds(key, cascadeParentIds));
-        }
-        return {
-          ...acc,
-          [key]: {
-            ...filter,
-            cascadeParentIds,
-          },
-        };
-      },
-      {},
-    );
+  const cleanDeletedParents = (
+  values: NativeFiltersForm | null,
+) => {
+  // Clean up the filterConfigMap and cascadeParentIds
+  const updatedFilterConfigMap = Object.keys(filterConfigMap).reduce(
+    (acc, key) => {
+      const filter = filterConfigMap[key];
+      const cascadeParentIds = filter.cascadeParentIds?.filter(id =>
+        canBeUsedAsDependency(id)
+      );
+      
+      if (cascadeParentIds) {
+        dispatch(updateCascadeParentIds(key, cascadeParentIds));
+      }
 
-    const filters = values?.filters;
-    if (filters) {
-      Object.keys(filters).forEach(key => {
-        const filter = filters[key];
-        if (!('dependencies' in filter)) {
-          return;
-        }
-        const { dependencies } = filter;
-        if (dependencies) {
-          filter.dependencies = dependencies.filter(id =>
-            canBeUsedAsDependency(id),
-          );
-        }
-      });
-    }
-    return updatedFilterConfigMap;
-  };
+      return {
+        ...acc,
+        [key]: {
+          ...filter,
+          cascadeParentIds,
+        },
+      };
+    },
+    {},
+  );
+
+  const filters = values?.filters;
+  if (filters) {
+    Object.keys(filters).forEach(key => {
+      const filter = filters[key];
+      
+      if (!('dependencies' in filter)) {
+        return;  
+      }
+
+      const originalDependencies = filter.dependencies || [];
+      
+      const cleanedDependencies = originalDependencies.filter(id =>
+        canBeUsedAsDependency(id)
+      );
+      
+      if (!isEqual(cleanedDependencies, originalDependencies)) {
+        filter.dependencies = cleanedDependencies;
+        console.log(originalDependencies, cleanedDependencies)
+        setFilterChanges(prevChanges => ({
+          ...prevChanges,
+          modified: {
+            ...prevChanges.modified,
+            [key]: {
+              ...prevChanges.modified?.[key],  
+              dependencies: filter.dependencies ?? [],  
+            }
+          }
+        }));
+      }
+    });
+  }
+
+  return updatedFilterConfigMap;
+};
 
   const handleErroredFilters = useCallback(() => {
     // managing left pane errored filters indicators
@@ -453,6 +475,8 @@ function FiltersConfigModal({
       }, {});
       console.log(newFilters)
       console.log(filterChanges)
+      console.log(values)
+      console.log(updatedFilterConfigMap)
       createHandleSave(
         updatedFilterConfigMap,
         orderedFilters,
