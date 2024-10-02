@@ -306,6 +306,7 @@ export interface FiltersConfigFormProps {
   filterToEdit?: Filter;
   removedFilters: Record<string, FilterRemoval>;
   restoreFilter: (filterId: string) => void;
+  onPatchUpdate: (filterId: string) => void;   
   form: FormInstance<NativeFiltersForm>;
   getAvailableFilters: (
     filterId: string,
@@ -346,6 +347,7 @@ const FiltersConfigForm = (
     restoreFilter,
     handleActiveFilterPanelChange,
     setErroredFilters,
+    onPatchUpdate,
     validateDependencies,
     getDependencySuggestion,
     isActive,
@@ -371,6 +373,12 @@ const FiltersConfigForm = (
   const filters = form.getFieldValue('filters');
   const formValues = filters?.[filterId];
   const formFilter = formValues || undoFormValues || defaultFormFilter;
+
+  const handlePatchUpdate = useCallback(() => {
+    if (onPatchUpdate) {
+      onPatchUpdate(filterId); 
+    }
+  }, [onPatchUpdate, filterId]);
 
   const dependencies: string[] =
     formFilter?.dependencies || filterToEdit?.cascadeParentIds || [];
@@ -488,7 +496,6 @@ const FiltersConfigForm = (
         groupby: formFilter?.column,
         ...formFilter,
       });
-
       formData.extra_form_data = dependenciesDefaultValues;
 
       setNativeFilterFieldValuesWrapper({
@@ -565,6 +572,7 @@ const FiltersConfigForm = (
         value: true,
       },
     ]);
+    handlePatchUpdate()
   }, [form]);
 
   const updateFormValues = useCallback(

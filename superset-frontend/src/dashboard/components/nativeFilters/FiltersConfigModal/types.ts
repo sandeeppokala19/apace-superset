@@ -62,9 +62,14 @@ export interface NativeFiltersForm {
 
 export interface FilterChanges {
   added: string[];
-  modified: Record<string, any>;
+  modified: string[];
   deleted: string[];   
   reordered: string[]; 
+}
+
+export interface HistoryOfModifications {
+  added: string[];    // Tracks added filter IDs
+  modified: string[]; // Tracks modified filter IDs
 }
 
 export type FilterRemoval =

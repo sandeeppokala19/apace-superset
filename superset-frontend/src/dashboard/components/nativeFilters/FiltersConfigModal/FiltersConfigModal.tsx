@@ -44,7 +44,7 @@ import FiltersConfigForm, {
 } from './FiltersConfigForm/FiltersConfigForm';
 import Footer from './Footer/Footer';
 import { useOpenModal, useRemoveCurrentFilter } from './state';
-import { FilterChanges, FilterRemoval, NativeFiltersForm } from './types';
+import { FilterChanges, FilterRemoval, HistoryOfModifications, NativeFiltersForm } from './types';
 import {
   createHandleSave,
   createHandleRemoveItem,
@@ -134,10 +134,14 @@ const DEFAULT_FORM_VALUES: NativeFiltersForm = {
 };
 const DEFAULT_FILTER_CHANGES: FilterChanges = {
   added: [],      // Tracks newly added filters
-  modified: {},   // Tracks modified filters and their configurations
+  modified: [],   // Tracks modified filters and contains their IDS
   deleted: [],    // Tracks filters marked for deletion
   reordered: [],  // Tracks the order of filters if reordering occurs
 };
+const DEFAULT_HISTORY_MODIFICATIONS: HistoryOfModifications = {
+  added: [],
+  modified: []
+}
 
 /**
  * This is the modal to configure all the dashboard-native filters.
@@ -167,24 +171,33 @@ function FiltersConfigModal({
 
   // this state contains the changes that we'll be sent through the PATCH endpoint
   const [filterChanges, setFilterChanges] = useState<FilterChanges>(DEFAULT_FILTER_CHANGES);
+  const [historyOfModifications, setHistoryOfModifications] = useState<HistoryOfModifications>(DEFAULT_HISTORY_MODIFICATIONS)
 
-  const handleModifyFilter = (filterId, updatedFilterData) => {
+  const handleModifyFilter = (filterId: string) => {
     setFilterChanges((prevState) => {
-      const newState = {
-        ...prevState,
-        modified: {
-          ...prevState.modified,
-          [filterId]: {
-            ...prevState.modified[filterId],
-            ...updatedFilterData,  
-          },
-        },
-      };
+      if (!prevState.modified.includes(filterId)) {
+        const newState = {
+          ...prevState,
+          modified: [...prevState.modified, filterId], 
+        };
+        
+        return newState;
+      }
   
-      console.log("Updated filterChanges state:", newState);
-  
-      return newState;
+      return prevState;
     });
+  setHistoryOfModifications((prevHistory) => {
+    if (!prevHistory.modified.includes(filterId)) {
+      const newHistory = {
+        ...prevHistory,
+        modified: [...prevHistory.modified, filterId],
+      };
+
+      return newHistory;
+    }
+    return prevHistory;
+  });
+    
   };
 
   // new filter ids belong to filters have been added during
@@ -232,11 +245,34 @@ function FiltersConfigModal({
   const restoreFilter = useCallback(
     (id: string) => {
       const removal = removedFilters[id];
-      // gotta clear the removal timeout to prevent the filter from getting deleted
+      // Clear the removal timeout if the filter is pending deletion
       if (removal?.isPending) clearTimeout(removal.timerId);
+  
       setRemovedFilters(current => ({ ...current, [id]: null }));
+  
+      setFilterChanges(prevState => {
+        const newDeleted = prevState.deleted.filter(deletedId => deletedId !== id);
+  
+        const wasAdded = historyOfModifications.added.includes(id);
+        const wasModified = historyOfModifications.modified.includes(id);
+  
+        let newAdded = prevState.added;
+        let newModified = prevState.modified;
+  
+        if (wasAdded) {
+          newAdded = [...prevState.added, id];
+        } else if (wasModified) {
+          newModified = [...prevState.modified, id];
+        }
+          return {
+          ...prevState,
+          deleted: newDeleted,
+          added: newAdded,
+          modified: newModified,
+        };
+      });
     },
-    [removedFilters],
+    [removedFilters, setFilterChanges, setRemovedFilters, historyOfModifications],
   );
   const initialFilterOrder = useMemo(
     () => Object.keys(filterConfigMap),
@@ -274,6 +310,10 @@ function FiltersConfigModal({
       setFilterChanges(prevState => ({
         ...prevState,
         added: [...prevState.added, newFilterId],
+      }));
+      setHistoryOfModifications(prevHistory => ({
+        ...prevHistory,
+        added: [...prevHistory.added, newFilterId],
       }));
       setCurrentFilterId(newFilterId);
       setSaveAlertVisible(false);
@@ -467,16 +507,19 @@ function FiltersConfigModal({
     handleErroredFilters();
     if (values) {
       const updatedFilterConfigMap = cleanDeletedParents(values);
-      const newFilters = filterChanges.added.reduce((acc, filterId) => {
+      const filterIdsInAdded = new Set(filterChanges.added); 
+      const modifiedWithoutAdded = filterChanges.modified.filter(
+      filterId => !filterIdsInAdded.has(filterId) 
+    );
+      const filterIdsToSave = [...filterChanges.added, ...modifiedWithoutAdded];
+
+      const newFilters = filterIdsToSave.reduce((acc, filterId) => {
         if (values['filters'][filterId]) {
-          acc[filterId] = values['filters'][filterId];
+          acc[filterId] = values['filters'][filterId]; 
         }
         return acc;
       }, {});
-      console.log(newFilters)
-      console.log(filterChanges)
-      console.log(values)
-      console.log(updatedFilterConfigMap)
+      
       createHandleSave(
         updatedFilterConfigMap,
         orderedFilters,
@@ -604,12 +647,9 @@ function FiltersConfigModal({
           Object.values(changes.filters).some(
             (filter: any) => filter.title && filter.title !== null,
           );
-
         if (changes.filters) {
-          Object.keys(changes.filters).forEach((filterId) => {
-            const updatedFields = changes.filters[filterId];
-  
-            handleModifyFilter(filterId, updatedFields);
+          Object.keys(changes.filters).forEach((filterId) => {  
+            handleModifyFilter(filterId);
           });
         }
         if (didChangeFilterName || didChangeSectionTitle) {
@@ -666,6 +706,7 @@ function FiltersConfigModal({
                 expanded={expanded}
                 ref={configFormRef}
                 form={form}
+                onPatchUpdate={handleModifyFilter}
                 filterId={id}
                 filterToEdit={filterConfigMap[id] as Filter}
                 removedFilters={removedFilters}

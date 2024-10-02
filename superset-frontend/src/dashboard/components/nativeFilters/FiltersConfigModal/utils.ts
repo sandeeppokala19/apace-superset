@@ -193,6 +193,8 @@ export const createHandleRemoveItem =
     }));
     setFilterChanges(prevState => ({
       ...prevState,
+      added: prevState.added.filter((id: string) => id !== filterId),
+      modified: prevState.modified.filter((id: string) => id !== filterId),
       deleted: [...prevState.deleted, filterId],
     }));
     setSaveAlertVisible(false);
