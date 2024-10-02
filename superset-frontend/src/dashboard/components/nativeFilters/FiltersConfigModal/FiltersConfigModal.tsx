@@ -354,6 +354,7 @@ function FiltersConfigModal({
     setSaveAlertVisible(false);
     setFormValues(DEFAULT_FORM_VALUES);
     setFilterChanges(DEFAULT_FILTER_CHANGES);
+    setHistoryOfModifications(DEFAULT_HISTORY_MODIFICATIONS);
     setErroredFilters(DEFAULT_EMPTY_FILTERS);
     if (filterIds.length > 0) {
       setActiveFilterPanelKey(getActiveFilterPanelKey(filterIds[0]));
@@ -503,7 +504,6 @@ function FiltersConfigModal({
       currentFilterId,
       setCurrentFilterId,
     );
-
     handleErroredFilters();
     if (values) {
       const updatedFilterConfigMap = cleanDeletedParents(values);
@@ -511,14 +511,18 @@ function FiltersConfigModal({
       const modifiedWithoutAdded = filterChanges.modified.filter(
       filterId => !filterIdsInAdded.has(filterId) 
     );
-      const filterIdsToSave = [...filterChanges.added, ...modifiedWithoutAdded];
+    filterChanges.modified = modifiedWithoutAdded
+    if (filterChanges.reordered) {
+      filterChanges.reordered = isEqual(filterChanges.reordered, initialFilterOrder) ? [] : filterChanges.reordered
+    }
+    const filterIdsToSave = [...filterChanges.added, ...modifiedWithoutAdded];
 
-      const newFilters = filterIdsToSave.reduce((acc, filterId) => {
-        if (values['filters'][filterId]) {
-          acc[filterId] = values['filters'][filterId]; 
-        }
-        return acc;
-      }, {});
+    // const newFilters = filterIdsToSave.reduce((acc, filterId) => {
+    //     if (values['filters'][filterId]) {
+    //       acc[filterId] = values['filters'][filterId]; 
+    //     }
+    //     return acc;
+    //   }, {});
       
       createHandleSave(
         updatedFilterConfigMap,
@@ -526,6 +530,7 @@ function FiltersConfigModal({
         initialFilterOrder,
         removedFilters,
         onSave,
+        filterChanges,
         values,
       )();
       resetForm(true);

@@ -28,7 +28,7 @@ import {
   logging,
 } from '@superset-ui/core';
 import { DASHBOARD_ROOT_ID } from 'src/dashboard/util/constants';
-import { FilterRemoval, NativeFiltersForm } from './types';
+import { FilterChanges, FilterRemoval, NativeFiltersForm } from './types';
 
 export const REMOVAL_DELAY_SECS = 5;
 
@@ -97,6 +97,7 @@ export const createHandleSave =
     initialOrder: string[],
     removedFilters: Record<string, FilterRemoval>,
     saveForm: Function,
+    filterChanges: FilterChanges,
     values: NativeFiltersForm,
   ) =>
   async () => {
@@ -147,6 +148,71 @@ export const createHandleSave =
           description: (formInputs.description || '').trim(),
         };
       });
+
+
+      const transformFilter = (id: string) => {
+        const formInputs = values.filters?.[id];
+        // If no form inputs are available, return the original config
+        if (!formInputs) return filterConfigMap[id];
+  
+        // Handle Divider type filter
+        if (formInputs.type === NativeFilterType.Divider) {
+          return {
+            id,
+            type: NativeFilterType.Divider,
+            scope: {
+              rootPath: [DASHBOARD_ROOT_ID],
+              excluded: [],
+            },
+            title: formInputs.title,
+            description: formInputs.description,
+          };
+        }
+  
+        // Handle normal filters
+        const target: Partial<NativeFilterTarget> = {};
+        if (formInputs.dataset) {
+          target.datasetId = formInputs.dataset.value;
+        }
+        if (formInputs.dataset && formInputs.column) {
+          target.column = { name: formInputs.column };
+        }
+  
+        return {
+          id,
+          adhoc_filters: formInputs.adhoc_filters,
+          time_range: formInputs.time_range,
+          controlValues: formInputs.controlValues ?? {},
+          granularity_sqla: formInputs.granularity_sqla,
+          requiredFirst: Object.values(formInputs.requiredFirst ?? {}).find(
+            rf => rf,
+          ),
+          name: formInputs.name,
+          filterType: formInputs.filterType,
+          targets: [target],
+          defaultDataMask: formInputs.defaultDataMask ?? getInitialDataMask(),
+          cascadeParentIds: formInputs.dependencies || [],
+          scope: formInputs.scope,
+          sortMetric: formInputs.sortMetric,
+          type: formInputs.type,
+          description: (formInputs.description || '').trim(),
+        };
+      };
+    
+      // Transform added and modified filters into their full objects
+  const transformedAdded = filterChanges.added.map(transformFilter);
+  const transformedModified = filterChanges.modified.map(transformFilter);
+
+    // Prepare the final state of filterChanges to be sent
+  const updatedFilterChanges = {
+      ...filterChanges,
+      added: transformedAdded, // Full objects for added filters
+      modified: transformedModified, // Full objects for modified filters
+    };
+
+  console.log(updatedFilterChanges)
+
+    // Now send the updated filterChanges state (without removed filters)
 
     await saveForm(newFilterConfig, initialOrder, filterIds);
   };
