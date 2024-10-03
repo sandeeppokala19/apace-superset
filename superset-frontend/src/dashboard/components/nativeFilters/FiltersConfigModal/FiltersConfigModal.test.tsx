@@ -476,9 +476,11 @@ test.only('adds a new filter and includes only the ID in the "added" key', async
   const filterNameInput = screen.getByRole('textbox', { name: /filter name/i });  
   userEvent.type(filterNameInput, 'New Product Filter');
 
-  const columnSelect = screen.getByLabelText('Column');
-  userEvent.change(columnSelect, { target: { value: 'sales' } });
+  const columnDropdownButton = screen.getByLabelText(COLUMN_REGEX);
+  userEvent.click(columnDropdownButton); 
 
+  const columnOption = await screen.findByText('Sales');
+  userEvent.click(columnOption);  
   userEvent.click(screen.getByRole('button', { name: SAVE_REGEX }));
 
   await waitFor(() =>

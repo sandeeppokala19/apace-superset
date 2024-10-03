@@ -415,10 +415,51 @@ function FiltersConfigModal({
   const cleanDeletedParents = (
   values: NativeFiltersForm | null,
 ) => {
-  // Clean up the filterConfigMap and cascadeParentIds
-  const updatedFilterConfigMap = Object.keys(filterConfigMap).reduce(
+  const filters = values?.filters;
+  if (filters) {
+    Object.keys(filters).forEach(key => {
+      const filter = filters[key];
+      
+      if (!('dependencies' in filter)) {
+        return;  
+      }
+
+      const originalDependencies = filter.dependencies || [];
+      
+      const cleanedDependencies = originalDependencies.filter(id =>
+        canBeUsedAsDependency(id)
+      );
+      
+      if (!isEqual(cleanedDependencies, originalDependencies)) {
+        filters[key] = {
+          ...filter,
+          dependencies: cleanedDependencies, 
+        };
+        handleModifyFilter(key);
+      }
+    });
+  }
+  const mergedFilterConfigMap = Object.keys(filterConfigMap).reduce(
     (acc, key) => {
-      const filter = filterConfigMap[key];
+      const filterFromConfigMap = filterConfigMap[key];
+      const filterFromValues = filters[key] || {};
+
+      const mergedFilter = {
+        ...filterFromConfigMap, 
+        ...filterFromValues,
+      };
+
+      return {
+        ...acc,
+        [key]: mergedFilter,
+      };
+    },
+    {},
+  );
+  // Clean up the filterConfigMap and cascadeParentIds
+  const updatedFilterConfigMap = Object.keys(mergedFilterConfigMap).reduce(
+    (acc, key) => {
+      const filter = mergedFilterConfigMap[key];
       const cascadeParentIds = filter.cascadeParentIds?.filter(id =>
         canBeUsedAsDependency(id)
       );
@@ -438,29 +479,7 @@ function FiltersConfigModal({
     },
     {},
   );
-
-  const filters = values?.filters;
-  if (filters) {
-    Object.keys(filters).forEach(key => {
-      const filter = filters[key];
-      
-      if (!('dependencies' in filter)) {
-        return;  
-      }
-
-      const originalDependencies = filter.dependencies || [];
-      
-      const cleanedDependencies = originalDependencies.filter(id =>
-        canBeUsedAsDependency(id)
-      );
-      
-      if (!isEqual(cleanedDependencies, originalDependencies)) {
-        filter.dependencies = cleanedDependencies;
-        handleModifyFilter(key)        
-      }
-    });
-  }
-
+  
   return updatedFilterConfigMap;
 };
 
@@ -507,7 +526,6 @@ function FiltersConfigModal({
     if (filterChanges.reordered) {
       filterChanges.reordered = isEqual(filterChanges.reordered, initialFilterOrder) ? [] : filterChanges.reordered
     }
-      console.log(updatedFilterConfigMap)
       // createHandleSave(
       //   updatedFilterConfigMap,
       //   orderedFilters,
