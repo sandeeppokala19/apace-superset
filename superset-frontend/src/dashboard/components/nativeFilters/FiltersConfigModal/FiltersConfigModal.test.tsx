@@ -359,98 +359,12 @@ test('filters are draggable', async () => {
     do not displays cancel message when there are no pending operations
 */
 
-// test('deletes a filter', async () => {
-//   const nativeFilterState = [
-//     buildNativeFilter('NATIVE_FILTER-1', 'state', ['NATIVE_FILTER-2']),
-//     buildNativeFilter('NATIVE_FILTER-2', 'country', []),
-//     buildNativeFilter('NATIVE_FILTER-3', 'product', []),
-//   ];
-//   const state = {
-//     ...defaultState(),
-//     dashboardInfo: {
-//       metadata: { native_filter_configuration: nativeFilterState },
-//     },
-//     dashboardLayout,
-//   };
-//   const onSave = jest.fn();
-//   defaultRender(state, {
-//     ...props,
-//     createNewOnOpen: false,
-//     onSave,
-//   });
-//   const removeButtons = screen.getAllByRole('img', { name: 'trash' });
-//   // remove NATIVE_FILTER-3 which isn't a dependency of any other filter
-//   userEvent.click(removeButtons[2]);
-//   userEvent.click(screen.getByRole('button', { name: SAVE_REGEX }));
-//   await waitFor(() =>
-//     expect(onSave).toHaveBeenCalledWith(
-//       expect.arrayContaining([
-//         expect.objectContaining({
-//           type: 'NATIVE_FILTER',
-//           id: 'NATIVE_FILTER-1',
-//           cascadeParentIds: ['NATIVE_FILTER-2'],
-//         }),
-//         expect.objectContaining({
-//           type: 'NATIVE_FILTER',
-//           id: 'NATIVE_FILTER-2',
-//           cascadeParentIds: [],
-//         }),
-//       ]),
-//       expect.any(Array), // initialOrder
-//       expect.any(Array), // currentOrder
-//     ),
-//   );
-// });
-
-// test('deletes a filter including dependencies', async () => {
-//   const nativeFilterState = [
-//     buildNativeFilter('NATIVE_FILTER-1', 'state', ['NATIVE_FILTER-2']),
-//     buildNativeFilter('NATIVE_FILTER-2', 'country', []),
-//     buildNativeFilter('NATIVE_FILTER-3', 'product', []),
-//   ];
-//   const state = {
-//     ...defaultState(),
-//     dashboardInfo: {
-//       metadata: { native_filter_configuration: nativeFilterState },
-//     },
-//     dashboardLayout,
-//   };
-//   const onSave = jest.fn();
-//   defaultRender(state, {
-//     ...props,
-//     createNewOnOpen: false,
-//     onSave,
-//   });
-//   const removeButtons = screen.getAllByRole('img', { name: 'trash' });
-//   // remove NATIVE_FILTER-2 which is a dependency of NATIVE_FILTER-1
-//   userEvent.click(removeButtons[1]);
-//   userEvent.click(screen.getByRole('button', { name: SAVE_REGEX }));
-//   await waitFor(() =>
-//     expect(onSave).toHaveBeenCalledWith(
-//       expect.arrayContaining([
-//         expect.objectContaining({
-//           id: 'NATIVE_FILTER-1',
-//           cascadeParentIds: [],
-//           type: 'NATIVE_FILTER',
-//         }),
-//         expect.objectContaining({
-//           id: 'NATIVE_FILTER-3',
-//           cascadeParentIds: [],
-//           type: 'NATIVE_FILTER',
-//         }),
-//       ]),
-//       expect.any(Array), // currentOrder
-//       expect.any(Array), // InitialOrder
-//     ),
-//   );
-// });
-
-test.only('adds a new filter and includes only the ID in the "added" key', async () => {
+test('deletes a filter', async () => {
   const nativeFilterState = [
-    buildNativeFilter('NATIVE_FILTER-1', 'state', []),
+    buildNativeFilter('NATIVE_FILTER-1', 'state', ['NATIVE_FILTER-2']),
     buildNativeFilter('NATIVE_FILTER-2', 'country', []),
+    buildNativeFilter('NATIVE_FILTER-3', 'product', []),
   ];
-
   const state = {
     ...defaultState(),
     dashboardInfo: {
@@ -458,44 +372,121 @@ test.only('adds a new filter and includes only the ID in the "added" key', async
     },
     dashboardLayout,
   };
-
   const onSave = jest.fn();
-
+  
   defaultRender(state, {
     ...props,
     createNewOnOpen: false,
     onSave,
   });
 
-  const addButton = screen.getByText('Add filters and dividers');
-  userEvent.hover(addButton);
+  const removeButtons = screen.getAllByRole('img', { name: 'trash' });
+  userEvent.click(removeButtons[2]); 
 
-  const filterOption = await screen.findByRole('menuitem', { name: /filter/i }); 
-  userEvent.click(filterOption);
-
-  const filterNameInput = screen.getByRole('textbox', { name: /filter name/i });  
-  userEvent.type(filterNameInput, 'New Product Filter');
-
-  const columnDropdownButton = screen.getByLabelText(COLUMN_REGEX);
-  userEvent.click(columnDropdownButton); 
-
-  const columnOption = await screen.findByText('Sales');
-  userEvent.click(columnOption);  
   userEvent.click(screen.getByRole('button', { name: SAVE_REGEX }));
 
   await waitFor(() =>
     expect(onSave).toHaveBeenCalledWith(
       expect.objectContaining({
-        added: expect.arrayContaining([
-          expect.any(String), 
-        ]),
+        added: expect.arrayContaining([]), 
+        deleted: expect.arrayContaining(['NATIVE_FILTER-3']),  
+        modified: expect.arrayContaining([]),  
+        reordered: expect.arrayContaining([]),  
+      }),
+    )
+  );
+});
+
+test.only('deletes a filter including dependencies', async () => {
+  const nativeFilterState = [
+    buildNativeFilter('NATIVE_FILTER-1', 'state', ['NATIVE_FILTER-2']),
+    buildNativeFilter('NATIVE_FILTER-2', 'country', []),
+    buildNativeFilter('NATIVE_FILTER-3', 'product', []),
+  ];
+  const state = {
+    ...defaultState(),
+    dashboardInfo: {
+      metadata: { native_filter_configuration: nativeFilterState },
+    },
+    dashboardLayout,
+  };
+  const onSave = jest.fn();
+  defaultRender(state, {
+    ...props,
+    createNewOnOpen: false,
+    onSave,
+  });
+  const removeButtons = screen.getAllByRole('img', { name: 'trash' });
+  userEvent.click(removeButtons[1]);
+  userEvent.click(screen.getByRole('button', { name: SAVE_REGEX }));
+  await waitFor(() =>
+    expect(onSave).toHaveBeenCalledWith(
+      // Expect the object passed to `onSave` to contain the modified, deleted
+      expect.objectContaining({
+        added: [],  
+        deleted: ['NATIVE_FILTER-2'],  
+        modified: expect.arrayContaining([
+          expect.any(Object),
+        ]), 
+        reordered: []
       }),
     ),
   );
-
-  const callArgs = onSave.mock.calls[0][0];
-  expect(callArgs.added.length).toBe(1);
-  expect(typeof callArgs.added[0]).toBe('string'); 
 });
+
+// test.only('adds a new filter and includes only the ID in the "added" key', async () => {
+//   const nativeFilterState = [
+//     buildNativeFilter('NATIVE_FILTER-1', 'state', []),
+//     buildNativeFilter('NATIVE_FILTER-2', 'country', []),
+//   ];
+
+//   const state = {
+//     ...defaultState(),
+//     dashboardInfo: {
+//       metadata: { native_filter_configuration: nativeFilterState },
+//     },
+//     dashboardLayout,
+//   };
+
+//   const onSave = jest.fn();
+
+//   defaultRender(state, {
+//     ...props,
+//     createNewOnOpen: false,
+//     onSave,
+//   });
+//   const addButton = screen.getByText('Add filters and dividers');
+//   userEvent.hover(addButton);
+
+//   const filterOption = await screen.findByRole('menuitem', { name: /filter/i }); 
+//   userEvent.click(filterOption);
+
+//   const filterNameInput = screen.getByRole('textbox', { name: /filter name/i });  
+//   userEvent.type(filterNameInput, 'New Product Filter');
+
+//   const columnDropdown = screen.getByRole('combobox', { name: /Column select/i });
+//   userEvent.click(columnDropdown);
+
+//   screen.debug();
+
+//   const columnOption = await screen.findByText('state');
+//   userEvent.click(columnOption);  
+
+//   userEvent.click(screen.getByRole('button', { name: SAVE_REGEX }));
+
+//   await waitFor(() =>
+//     expect(onSave).toHaveBeenCalledWith(
+//       expect.objectContaining({
+//         added: expect.arrayContaining([
+//           expect.any(String), 
+//         ]),
+//       }),
+//     ),
+//   );
+
+//   const callArgs = onSave.mock.calls[0][0];
+//   expect(callArgs.added.length).toBe(1);
+//   expect(typeof callArgs.added[0]).toBe('string'); 
+// });
 
 

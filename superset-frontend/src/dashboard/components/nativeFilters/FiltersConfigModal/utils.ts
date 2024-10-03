@@ -162,7 +162,7 @@ export const validateForm = async (
   async () => {
       const transformFilter = (id: string) => {
         const formInputs = values[id];
-
+        console.log(formInputs)
         if (formInputs.type === NativeFilterType.Divider) {
           return {
             id,
@@ -208,14 +208,10 @@ export const validateForm = async (
   const transformedAdded = filterChanges.added.map(transformFilter);
   const transformedModified = filterChanges.modified.map(transformFilter);
 
-  const updatedFilterChanges = {
-      ...filterChanges,
-      added: transformedAdded, 
-      modified: transformedModified,
-    };
+  filterChanges.added = transformedAdded;
+  filterChanges.modified = transformedModified;
     
-    console.log(updatedFilterChanges)
-    await saveForm(updatedFilterChanges);
+    await saveForm(filterChanges);
   };
 
 export const createHandleRemoveItem =
@@ -231,9 +227,7 @@ export const createHandleRemoveItem =
       val: string[] | ((prevState: string[]) => string[]),
     ) => void,
     setSaveAlertVisible: Function,
-    setFilterChanges: (
-      value: ((prevState: any) => any) | any
-    ) => void,
+    filterChangesRef: React.MutableRefObject<any>,
   ) =>
   (filterId: string) => {
     const completeFilterRemoval = (filterId: string) => {
@@ -258,12 +252,13 @@ export const createHandleRemoveItem =
       ...removedFilters,
       [filterId]: { isPending: true, timerId },
     }));
-    setFilterChanges(prevState => ({
-      ...prevState,
-      added: prevState.added.filter((id: string) => id !== filterId),
-      modified: prevState.modified.filter((id: string) => id !== filterId),
-      deleted: [...prevState.deleted, filterId],
-    }));
+    filterChangesRef.current.added = filterChangesRef.current.added.filter(
+      (id: string) => id !== filterId,
+    );
+    filterChangesRef.current.modified = filterChangesRef.current.modified.filter(
+      (id: string) => id !== filterId,
+    );
+    filterChangesRef.current.deleted.push(filterId);
     setSaveAlertVisible(false);
   };
 
