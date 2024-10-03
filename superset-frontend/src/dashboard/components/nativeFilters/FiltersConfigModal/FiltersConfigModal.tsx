@@ -507,7 +507,7 @@ function FiltersConfigModal({
     if (filterChanges.reordered) {
       filterChanges.reordered = isEqual(filterChanges.reordered, initialFilterOrder) ? [] : filterChanges.reordered
     }
-      
+      console.log(updatedFilterConfigMap)
       // createHandleSave(
       //   updatedFilterConfigMap,
       //   orderedFilters,

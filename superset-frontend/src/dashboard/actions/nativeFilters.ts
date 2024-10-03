@@ -143,16 +143,16 @@ export const setFilterConfiguration =
         cleanedFilterChanges,
       });
       dispatch(
-        setDataMaskForFilterConfigComplete(mergedFilterConfig, oldFilters),
+        setDataMaskForFilterConfigComplete(cleanedFilterChanges.modified, oldFilters),
       );
     } catch (err) {
       dispatch({
         type: SET_FILTER_CONFIG_FAIL,
-        filterConfig: mergedFilterConfig,
+        filterConfig: cleanedFilterChanges,
       });
       dispatch({
         type: SET_DATA_MASK_FOR_FILTER_CONFIG_FAIL,
-        filterConfig: mergedFilterConfig,
+        filterConfig: cleanedFilterChanges,
       });
     }
   };

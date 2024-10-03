@@ -161,7 +161,7 @@ export const validateForm = async (
   ) =>
   async () => {
       const transformFilter = (id: string) => {
-        const formInputs = values.filters?.[id];
+        const formInputs = values[id];
 
         if (formInputs.type === NativeFilterType.Divider) {
           return {
