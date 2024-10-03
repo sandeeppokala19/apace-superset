@@ -36,7 +36,7 @@ export function dashboardInfoChanged(newInfo: { metadata: any }) {
   return { type: DASHBOARD_INFO_UPDATED, newInfo };
 }
 
-export function dashboardInfoPatched(newInfo: { metadata: any }) {
+export function dashboardInfoPatched(newInfo: Record<string, any>) {
   return { type: DASHBOARD_INFO_PATCHED, newInfo };
 }
 

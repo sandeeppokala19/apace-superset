@@ -423,8 +423,9 @@ function FiltersConfigModal({
         canBeUsedAsDependency(id)
       );
       
-      if (cascadeParentIds) {
+      if (cascadeParentIds && !isEqual(cascadeParentIds, filter.cascadeParentIds)) {
         dispatch(updateCascadeParentIds(key, cascadeParentIds));
+        handleModifyFilter(key); 
       }
 
       return {
@@ -455,17 +456,7 @@ function FiltersConfigModal({
       
       if (!isEqual(cleanedDependencies, originalDependencies)) {
         filter.dependencies = cleanedDependencies;
-        console.log(originalDependencies, cleanedDependencies)
-        setFilterChanges(prevChanges => ({
-          ...prevChanges,
-          modified: {
-            ...prevChanges.modified,
-            [key]: {
-              ...prevChanges.modified?.[key],  
-              dependencies: filter.dependencies ?? [],  
-            }
-          }
-        }));
+        handleModifyFilter(key)        
       }
     });
   }
@@ -516,14 +507,6 @@ function FiltersConfigModal({
     if (filterChanges.reordered) {
       filterChanges.reordered = isEqual(filterChanges.reordered, initialFilterOrder) ? [] : filterChanges.reordered
     }
-    const filterIdsToSave = [...filterChanges.added, ...modifiedWithoutAdded];
-
-    // const newFilters = filterIdsToSave.reduce((acc, filterId) => {
-    //     if (values['filters'][filterId]) {
-    //       acc[filterId] = values['filters'][filterId]; 
-    //     }
-    //     return acc;
-    //   }, {});
       
       // createHandleSave(
       //   updatedFilterConfigMap,
@@ -537,7 +520,7 @@ function FiltersConfigModal({
       createAlternativeHandleSave(
         onSave,
         filterChanges,
-        values,
+        updatedFilterConfigMap,
       )();
       resetForm(true);
     } else {

@@ -34,16 +34,35 @@ export default function dashboardStateReducer(state = {}, action) {
         // server-side compare last_modified_time in second level
         last_modified_time: Math.round(new Date().getTime() / 1000),
       };
-    case DASHBOARD_INFO_PATCHED:
-      return {
-        ...state,
-        ...action.newInfo,
-        metadata: {
-          ...state.metadata,
-          ...action.newInfo.metadata,
-        },
-        last_modified_time: Math.round(new Date().getTime() / 1000),
-      };
+      case DASHBOARD_INFO_PATCHED: {
+        const { added = [], modified = [], deleted = [], reordered = [] } = action.newInfo;
+      
+        let updatedFilters = state.metadata.native_filters_configuration.filter(
+          filter => !deleted.some(deletedFilter => deletedFilter.id === filter.id)
+        );
+      
+        updatedFilters = [...updatedFilters, ...added];
+      
+        updatedFilters = updatedFilters.map(filter => {
+          const modifiedFilter = modified.find(mod => mod.id === filter.id);
+          return modifiedFilter ? { ...filter, ...modifiedFilter } : filter;
+        });
+      
+        if (reordered.length > 0) {
+          updatedFilters = reordered.map(reorderedFilter => 
+            updatedFilters.find(filter => filter.id === reorderedFilter.id)
+          ).filter(Boolean);  
+        }
+      
+        return {
+          ...state,
+          metadata: {
+            ...state.metadata,
+            native_filters_configuration: updatedFilters,
+          },
+          last_modified_time: Math.round(new Date().getTime() / 1000),
+        };
+      }
     case HYDRATE_DASHBOARD:
       return {
         ...state,

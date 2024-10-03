@@ -683,7 +683,7 @@ class DashboardRestApi(BaseSupersetModelRestApi):
             response = self.response_422(message=str(ex))
         return response
     
-    @expose("/<pk>", methods=("PATCH",))
+    @expose("/<pk>/", methods=("PATCH",))
     @protect()
     @safe
     @statsd_metrics
