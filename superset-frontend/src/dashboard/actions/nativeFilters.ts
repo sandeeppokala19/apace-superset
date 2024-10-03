@@ -106,7 +106,7 @@ export const setFilterConfiguration =
     const { id } = getState().dashboardInfo;
     const oldFilters = getState().nativeFilters?.filters;
     const cleanedFilterChanges = filterChanges;
-
+    console.log(filterChanges)
     if (filterChanges.modified.length != 0) {
       const mergedFilters = mergeFilters(oldFilters, filterChanges.modified);
       const cleanedFilterChanges = cleanModifiedFilters(oldFilters, filterChanges, mergedFilters)

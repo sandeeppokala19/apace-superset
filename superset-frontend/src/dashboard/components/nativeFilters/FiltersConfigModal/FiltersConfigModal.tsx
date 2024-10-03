@@ -144,6 +144,8 @@ const DEFAULT_HISTORY_MODIFICATIONS: HistoryOfModifications = {
   modified: []
 }
 
+
+
 /**
  * This is the modal to configure all the dashboard-native filters.
  * Manages modal-level state, such as what filters are in the list,
@@ -173,6 +175,18 @@ function FiltersConfigModal({
   // this state contains the changes that we'll be sent through the PATCH endpoint
   const filterChanges = useRef<FilterChanges>(DEFAULT_FILTER_CHANGES);
   const historyOfModifications = useRef<HistoryOfModifications>(DEFAULT_HISTORY_MODIFICATIONS)
+
+  const resetFilterChanges = () => {
+    filterChanges.current.added = [];
+    filterChanges.current.modified = [];
+    filterChanges.current.deleted = [];
+    filterChanges.current.reordered = [];
+  };
+
+  const resetHistoryOfModifications = () => {
+    historyOfModifications.current.added = []
+    historyOfModifications.current.modified = []
+  }
 
   const handleModifyFilter = (filterId: string) => {
     if (!filterChanges.current.modified.includes(filterId)) {
@@ -283,7 +297,6 @@ function FiltersConfigModal({
     (type: NativeFilterType) => {
       const newFilterId = generateFilterId(type);
       setNewFilterIds([...newFilterIds, newFilterId]);
-
       filterChanges.current.added.push(newFilterId);
       historyOfModifications.current.added.push(newFilterId);
       setCurrentFilterId(newFilterId);
@@ -324,8 +337,9 @@ function FiltersConfigModal({
     setRemovedFilters(DEFAULT_REMOVED_FILTERS);
     setSaveAlertVisible(false);
     setFormValues(DEFAULT_FORM_VALUES);
-    filterChanges.current = DEFAULT_FILTER_CHANGES;
-    historyOfModifications.current = DEFAULT_HISTORY_MODIFICATIONS;
+    console.log(filterChanges)
+    resetFilterChanges()
+    resetHistoryOfModifications()
     setErroredFilters(DEFAULT_EMPTY_FILTERS);
     if (filterIds.length > 0) {
       setActiveFilterPanelKey(getActiveFilterPanelKey(filterIds[0]));
@@ -507,6 +521,8 @@ function FiltersConfigModal({
           ? []
           : filterChangesInRef.reordered;
       }
+      console.log(filterChangesInRef)
+      console.log(updatedFilterConfigMap)
       createAlternativeHandleSave(
         onSave,
         filterChangesInRef, 

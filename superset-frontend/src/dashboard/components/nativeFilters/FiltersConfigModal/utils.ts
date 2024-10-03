@@ -162,7 +162,7 @@ export const validateForm = async (
   async () => {
       const transformFilter = (id: string) => {
         const formInputs = values[id];
-        console.log(formInputs)
+        
         if (formInputs.type === NativeFilterType.Divider) {
           return {
             id,
@@ -208,10 +208,13 @@ export const validateForm = async (
   const transformedAdded = filterChanges.added.map(transformFilter);
   const transformedModified = filterChanges.modified.map(transformFilter);
 
-  filterChanges.added = transformedAdded;
-  filterChanges.modified = transformedModified;
+  const newFilterChanges = {
+    ...filterChanges, 
+    added: transformedAdded,   
+    modified: transformedModified,  
+  };
     
-    await saveForm(filterChanges);
+    await saveForm(newFilterChanges);
   };
 
 export const createHandleRemoveItem =
