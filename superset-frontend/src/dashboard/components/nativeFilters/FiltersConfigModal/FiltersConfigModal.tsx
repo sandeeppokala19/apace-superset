@@ -46,7 +46,8 @@ import Footer from './Footer/Footer';
 import { useOpenModal, useRemoveCurrentFilter } from './state';
 import { FilterChanges, FilterRemoval, HistoryOfModifications, NativeFiltersForm } from './types';
 import {
-  createHandleSave,
+  // createHandleSave,
+  createAlternativeHandleSave,
   createHandleRemoveItem,
   generateFilterId,
   getFilterIds,
@@ -524,11 +525,16 @@ function FiltersConfigModal({
     //     return acc;
     //   }, {});
       
-      createHandleSave(
-        updatedFilterConfigMap,
-        orderedFilters,
-        initialFilterOrder,
-        removedFilters,
+      // createHandleSave(
+      //   updatedFilterConfigMap,
+      //   orderedFilters,
+      //   initialFilterOrder,
+      //   removedFilters,
+      //   onSave,
+      //   filterChanges,
+      //   values,
+      // )();
+      createAlternativeHandleSave(
         onSave,
         filterChanges,
         values,

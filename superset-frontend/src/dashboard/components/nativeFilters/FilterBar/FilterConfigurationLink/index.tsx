@@ -24,6 +24,7 @@ import Button from 'src/components/Button';
 import { FilterConfiguration, styled } from '@superset-ui/core';
 import FiltersConfigModal from 'src/dashboard/components/nativeFilters/FiltersConfigModal/FiltersConfigModal';
 import { getFilterBarTestId } from '../utils';
+import { FilterChanges } from '../../FiltersConfigModal/types';
 
 export interface FCBProps {
   createNewOnOpen?: boolean;
@@ -53,13 +54,11 @@ export const FilterConfigurationLink: FC<FCBProps> = ({
 
   const submit = useCallback(
     async (
-      filterConfig: FilterConfiguration,
-      initialOrder: string[],
-      currentOrder: string[],
+      filterChanges: FilterChanges,
     ) => {
       console.time('setFilterConfiguration');
       dispatch(
-        await setFilterConfiguration(filterConfig, initialOrder, currentOrder),
+        await setFilterConfiguration(filterChanges),
       );
       console.timeEnd('setFilterConfiguration');
       close();

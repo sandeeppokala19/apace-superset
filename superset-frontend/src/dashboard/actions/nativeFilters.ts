@@ -23,7 +23,7 @@ import {
   NativeFiltersState,
 } from '@superset-ui/core';
 import { Dispatch } from 'redux';
-import { cloneDeep } from 'lodash';
+import { cloneDeep, filter } from 'lodash';
 import {
   SET_DATA_MASK_FOR_FILTER_CONFIG_FAIL,
   setDataMaskForFilterConfigComplete,
@@ -33,6 +33,7 @@ import { HYDRATE_DASHBOARD } from './hydrate';
 import { dashboardInfoChanged, dashboardInfoPatched } from './dashboardInfo';
 import { DashboardInfo } from '../types';
 import { detectFilterChanges, preparePayload } from './patch_alternative'
+import { FilterChanges } from '../components/nativeFilters/FiltersConfigModal/types';
 
 export const SET_FILTER_CONFIG_BEGIN = 'SET_FILTER_CONFIG_BEGIN';
 export interface SetFilterConfigBegin {
@@ -56,80 +57,133 @@ export interface SetInScopeStatusOfFilters {
   filterConfig: FilterConfiguration;
 }
 
-const simulateFutureState = (
-  filterConfig?: FilterConfiguration,
-  prevState?: NativeFiltersState,
-): NativeFiltersState => {
-  const newState: Partial<NativeFiltersState> = {};
-  const filters = {};
+// const simulateFutureState = (
+//   filterConfig?: FilterConfiguration,
+//   prevState?: NativeFiltersState,
+// ): NativeFiltersState => {
+//   const newState: Partial<NativeFiltersState> = {};
+//   const filters = {};
 
-  if (filterConfig) {
-    filterConfig.forEach(filter => {
-      const { id } = filter;
-      filters[id] = filter;
-    });
-    newState.filters = filters;
-  } else {
-    newState.filters = prevState?.filters ?? {};
-  }
+//   if (filterConfig) {
+//     filterConfig.forEach(filter => {
+//       const { id } = filter;
+//       filters[id] = filter;
+//     });
+//     newState.filters = filters;
+//   } else {
+//     newState.filters = prevState?.filters ?? {};
+//   }
 
-  newState.focusedFilterId = undefined;
-  return newState as NativeFiltersState;
-};
+//   newState.focusedFilterId = undefined;
+//   return newState as NativeFiltersState;
+// };
+
+// const mergeFilters = (
+//   oldFilters: Partial<NativeFiltersState>,
+//   newFilters: Partial<NativeFiltersState>,
+// ) =>
+//   Object.keys(newFilters).reduce(
+//     (merged, key) => ({
+//       ...merged,
+//       [key]: { ...oldFilters[key], ...newFilters[key] },
+//     }),
+//     {},
+//   );
 
 const mergeFilters = (
   oldFilters: Partial<NativeFiltersState>,
-  newFilters: Partial<NativeFiltersState>,
+  newFilters: Array<Partial<NativeFiltersState>>,
 ) =>
-  Object.keys(newFilters).reduce(
-    (merged, key) => ({
-      ...merged,
-      [key]: { ...oldFilters[key], ...newFilters[key] },
-    }),
-    {},
-  );
+  newFilters.reduce((merged, newFilter) => {
+    const { id } = newFilter;
 
-const compareStates = (
-  newState: NativeFiltersState,
-  prevState: NativeFiltersState,
-  initialOrder: string[],
-  currentOrder: string[],
-) => {
-  const { filters } = newState;
-  const mergedFilters = mergeFilters(prevState, filters);
-  const stateComparison = areObjectsEqual(mergedFilters, prevState, {
-    ignoreUndefined: true,
-  });
-  const orderComparison = areArraysShallowEqual(initialOrder, currentOrder);
-  return stateComparison && orderComparison;
-};
+    if (oldFilters[id]) {
+      return {
+        ...merged,
+        [id]: { ...oldFilters[id], ...newFilter },  
+      };
+    }
+
+    return merged;
+  }, {});
+
+  const cleanModifiedFilters = (prevState, filterChanges, mergedFilters) => {
+    filterChanges.modified = filterChanges.modified.filter(newFilter => {
+      const { id } = newFilter;
+  
+      const oldFilter = prevState[id];
+      const mergedFilter = mergedFilters[id];
+  
+      const stateComparison = areObjectsEqual(mergedFilter, oldFilter, {
+        ignoreUndefined: true,  
+      });
+  
+      if (stateComparison) {
+        return false;  
+      }
+  
+      return true;
+    });
+  
+    return filterChanges;
+  };
+
+  const isFilterChangesEmpty = (filterChanges) => {
+    return Object.values(filterChanges).every(array => Array.isArray(array) && array.length === 0);
+  };
+  
+
+// const compareStates = (
+//   newState: NativeFiltersState,
+//   prevState: NativeFiltersState,
+//   initialOrder: string[],
+//   currentOrder: string[],
+// ) => {
+//   const { filters } = newState;
+//   const mergedFilters = mergeFilters(prevState, filters);
+//   const stateComparison = areObjectsEqual(mergedFilters, prevState, {
+//     ignoreUndefined: true,
+//   });
+//   const orderComparison = areArraysShallowEqual(initialOrder, currentOrder);
+//   return stateComparison && orderComparison;
+// };
 
 export const setFilterConfiguration =
   (
-    filterConfig: FilterConfiguration,
-    initialOrder: string[],
-    currentOrder: string[],
+    filterChanges: FilterChanges,
   ) =>
   async (dispatch: Dispatch, getState: () => any) => {
     const { id } = getState().dashboardInfo;
     const oldFilters = getState().nativeFilters?.filters;
-    const newState = simulateFutureState(filterConfig, oldFilters);
-
-    const mergedFilterConfigs = filterConfig.map(filter => {
-      const oldFilter = oldFilters[filter.id];
-      if (!oldFilter) {
-        return filter;
-      }
-      const clonedOldFilter = cloneDeep(oldFilter);
-      const clonedFilter = cloneDeep(filter);    
-      return Object.assign({}, clonedOldFilter, clonedFilter);
-    });
-    const filterChanges = detectFilterChanges(mergedFilterConfigs, oldFilters, initialOrder, currentOrder);
-    
-    if (compareStates(newState, oldFilters, initialOrder, currentOrder)) {
-      console.log('Nothing to change!');
-      return;
+    if (filterChanges.modified.length != 0) {
+      const mergedFilters = mergeFilters(oldFilters, filterChanges.modified);
+      const cleanedFilterChanges = cleanModifiedFilters(oldFilters, filterChanges, mergedFilters)
+      console.log(cleanedFilterChanges)
     }
+    if (isFilterChangesEmpty(filterChanges)) {
+      console.log("E gol!")
+    }
+    return;
+
+    // const newState = simulateFutureState(filterConfig, oldFilters);
+
+    // const mergedFilterConfigs = filterConfig.map(filter => {
+    //   const oldFilter = oldFilters[filter.id];
+    //   if (!oldFilter) {
+    //     return filter;
+    //   }
+    //   const clonedOldFilter = cloneDeep(oldFilter);
+    //   const clonedFilter = cloneDeep(filter);    
+    //   return Object.assign({}, clonedOldFilter, clonedFilter);
+    // });
+    // const filterChanges = detectFilterChanges(mergedFilterConfigs, oldFilters, initialOrder, currentOrder);
+    
+    // if (compareStates(newState, oldFilters, initialOrder, currentOrder)) {
+    //   console.log('Nothing to change!');
+    //   return;
+    // }
+    
+    return;
     dispatch({
       type: SET_FILTER_CONFIG_BEGIN,
       filterConfig,

@@ -90,72 +90,79 @@ export const validateForm = async (
   }
 };
 
-export const createHandleSave =
+// export const createHandleSave =
+//   (
+//     filterConfigMap: Record<string, Filter | Divider>,
+//     filterIds: string[],
+//     initialOrder: string[],
+//     removedFilters: Record<string, FilterRemoval>,
+//     saveForm: Function,
+//     filterChanges: FilterChanges,
+//     values: NativeFiltersForm,
+//   ) =>
+//   async () => {
+//     const newFilterConfig: FilterConfiguration = filterIds
+//       .filter(id => !removedFilters[id])
+//       .map(id => {
+//         // create a filter config object from the form inputs
+//         const formInputs = values.filters?.[id];
+//         // if user didn't open a filter, return the original config
+//         if (!formInputs) return filterConfigMap[id];
+//         if (formInputs.type === NativeFilterType.Divider) {
+          
+//           return {
+//             id,
+//             type: NativeFilterType.Divider,
+//             scope: {
+//               rootPath: [DASHBOARD_ROOT_ID],
+//               excluded: [],
+//             },
+//             title: formInputs.title,
+//             description: formInputs.description,
+//           };
+//         }
+//         const target: Partial<NativeFilterTarget> = {};
+//         if (formInputs.dataset) {
+//           target.datasetId = formInputs.dataset.value;
+//         }
+//         if (formInputs.dataset && formInputs.column) {
+//           target.column = { name: formInputs.column };
+//         }
+//         return {
+//           id,
+//           adhoc_filters: formInputs.adhoc_filters,
+//           time_range: formInputs.time_range,
+//           controlValues: formInputs.controlValues ?? {},
+//           granularity_sqla: formInputs.granularity_sqla,
+//           requiredFirst: Object.values(formInputs.requiredFirst ?? {}).find(
+//             rf => rf,
+//           ),
+//           name: formInputs.name,
+//           filterType: formInputs.filterType,
+//           // for now there will only ever be one target
+//           targets: [target],
+//           defaultDataMask: formInputs.defaultDataMask ?? getInitialDataMask(),
+//           cascadeParentIds: formInputs.dependencies || [],
+//           scope: formInputs.scope,
+//           sortMetric: formInputs.sortMetric,
+//           type: formInputs.type,
+//           description: (formInputs.description || '').trim(),
+//         };
+//       });
+//     await saveForm(newFilterConfig, initialOrder, filterIds);
+//   };
+
+
+  export const createAlternativeHandleSave =
   (
-    filterConfigMap: Record<string, Filter | Divider>,
-    filterIds: string[],
-    initialOrder: string[],
-    removedFilters: Record<string, FilterRemoval>,
     saveForm: Function,
     filterChanges: FilterChanges,
-    values: NativeFiltersForm,
+    values,
   ) =>
   async () => {
-    const newFilterConfig: FilterConfiguration = filterIds
-      .filter(id => !removedFilters[id])
-      .map(id => {
-        // create a filter config object from the form inputs
-        const formInputs = values.filters?.[id];
-        // if user didn't open a filter, return the original config
-        if (!formInputs) return filterConfigMap[id];
-        if (formInputs.type === NativeFilterType.Divider) {
-          return {
-            id,
-            type: NativeFilterType.Divider,
-            scope: {
-              rootPath: [DASHBOARD_ROOT_ID],
-              excluded: [],
-            },
-            title: formInputs.title,
-            description: formInputs.description,
-          };
-        }
-        const target: Partial<NativeFilterTarget> = {};
-        if (formInputs.dataset) {
-          target.datasetId = formInputs.dataset.value;
-        }
-        if (formInputs.dataset && formInputs.column) {
-          target.column = { name: formInputs.column };
-        }
-        return {
-          id,
-          adhoc_filters: formInputs.adhoc_filters,
-          time_range: formInputs.time_range,
-          controlValues: formInputs.controlValues ?? {},
-          granularity_sqla: formInputs.granularity_sqla,
-          requiredFirst: Object.values(formInputs.requiredFirst ?? {}).find(
-            rf => rf,
-          ),
-          name: formInputs.name,
-          filterType: formInputs.filterType,
-          // for now there will only ever be one target
-          targets: [target],
-          defaultDataMask: formInputs.defaultDataMask ?? getInitialDataMask(),
-          cascadeParentIds: formInputs.dependencies || [],
-          scope: formInputs.scope,
-          sortMetric: formInputs.sortMetric,
-          type: formInputs.type,
-          description: (formInputs.description || '').trim(),
-        };
-      });
-
-
       const transformFilter = (id: string) => {
         const formInputs = values.filters?.[id];
-        // If no form inputs are available, return the original config
-        if (!formInputs) return filterConfigMap[id];
-  
-        // Handle Divider type filter
+
         if (formInputs.type === NativeFilterType.Divider) {
           return {
             id,
@@ -169,7 +176,6 @@ export const createHandleSave =
           };
         }
   
-        // Handle normal filters
         const target: Partial<NativeFilterTarget> = {};
         if (formInputs.dataset) {
           target.datasetId = formInputs.dataset.value;
@@ -199,22 +205,17 @@ export const createHandleSave =
         };
       };
     
-      // Transform added and modified filters into their full objects
   const transformedAdded = filterChanges.added.map(transformFilter);
   const transformedModified = filterChanges.modified.map(transformFilter);
 
-    // Prepare the final state of filterChanges to be sent
   const updatedFilterChanges = {
       ...filterChanges,
-      added: transformedAdded, // Full objects for added filters
-      modified: transformedModified, // Full objects for modified filters
+      added: transformedAdded, 
+      modified: transformedModified,
     };
-
-  console.log(updatedFilterChanges)
-
-    // Now send the updated filterChanges state (without removed filters)
-
-    await saveForm(newFilterConfig, initialOrder, filterIds);
+    
+    console.log(updatedFilterChanges)
+    await saveForm(updatedFilterChanges);
   };
 
 export const createHandleRemoveItem =
