@@ -102,29 +102,38 @@ function fillNativeFilters(
 }
 
 function updateDataMaskForFilterChanges(
-  filterChanges: { added: Filter[]; modified: Filter[]; deleted: string[]; reordered: string[] }, // filterChanges object
-  mergedDataMask: DataMaskStateWithId,
+  filterChanges: { added: Filter[]; modified: Filter[]; deleted: string[]; reordered: string[] },
+  mergedDataMask: DataMaskStateWithId = {},
   draftDataMask: DataMaskStateWithId,
   initialDataMask?: DataMaskStateWithId,
-  currentFilters?: Filters
+  currentFilters?: Filters,
+  oldFilters?: DataMaskStateWithId
 ) {
   const { added = [], modified = [], deleted = [], reordered = [] } = filterChanges;
 
+  mergedDataMask = { ...oldFilters, ...mergedDataMask };
+
+  const dataMask = initialDataMask || {};
+
   added.forEach(filter => {
-    const dataMask = initialDataMask || {};
-    mergedDataMask[filter.id] = {
-      ...getInitialDataMask(filter.id), // take initial data
-      ...filter.defaultDataMask,        // if something new came from BE - take it
-      ...dataMask[filter.id],           // merge with existing initial data mask
+    mergedDataMask = {  
+      ...mergedDataMask,
+      [filter.id]: {
+        ...getInitialDataMask(filter.id),
+        ...filter.defaultDataMask,
+        ...dataMask[filter.id],
+      },
     };
   });
 
   modified.forEach(filter => {
-    const dataMask = initialDataMask || {};
-    mergedDataMask[filter.id] = {
-      ...mergedDataMask[filter.id], 
-      ...filter.defaultDataMask,    
-      ...dataMask[filter.id],       
+    mergedDataMask = { 
+      ...mergedDataMask,
+      [filter.id]: {
+        ...mergedDataMask[filter.id],
+        ...filter.defaultDataMask,
+        ...dataMask[filter.id],
+      },
     };
     
     if (
@@ -132,28 +141,31 @@ function updateDataMaskForFilterChanges(
       !areObjectsEqual(
         filter.defaultDataMask,
         currentFilters[filter.id]?.defaultDataMask,
-        { ignoreUndefined: true },
+        { ignoreUndefined: true }
       )
     ) {
-      mergedDataMask[filter.id] = {
-        ...mergedDataMask[filter.id],
-        ...filter.defaultDataMask,
+      mergedDataMask = {
+        ...mergedDataMask,
+        [filter.id]: {
+          ...mergedDataMask[filter.id],
+          ...filter.defaultDataMask,
+        },
       };
     }
   });
 
   deleted.forEach(filterId => {
-    delete mergedDataMask[filterId]; 
+    delete mergedDataMask[filterId];
   });
 
   if (reordered.length > 0) {
     const reorderedDataMask = {};
     reordered.forEach(filterId => {
       if (mergedDataMask[filterId]) {
-        reorderedDataMask[filterId] = mergedDataMask[filterId]; 
+        reorderedDataMask[filterId] = mergedDataMask[filterId];
       }
     });
-    mergedDataMask = reorderedDataMask; 
+    mergedDataMask = { ...mergedDataMask, ...reorderedDataMask };
   }
 
   Object.values(draftDataMask).forEach(filter => {
