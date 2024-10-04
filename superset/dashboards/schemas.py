@@ -115,6 +115,7 @@ def validate_json_metadata(value: Union[bytes, bytearray, str]) -> None:
     if errors:
         raise ValidationError(errors)
 
+
 def validate_partial_json_metadata(value: Union[bytes, bytearray, str]) -> None:
     if not value:
         return
@@ -125,6 +126,7 @@ def validate_partial_json_metadata(value: Union[bytes, bytearray, str]) -> None:
     errors = DashboardJSONMetadataSchema().validate(value_obj, partial=True)
     if errors:
         raise ValidationError(errors)
+
 
 class DashboardJSONMetadataSchema(Schema):
     # native_filter_configuration is for dashboard-native filters
@@ -172,7 +174,8 @@ class DashboardJSONMetadataSchema(Schema):
             del data["show_native_filters"]
 
         return data
-    
+
+
 class UserSchema(Schema):
     id = fields.Int()
     username = fields.String()
@@ -343,6 +346,7 @@ class DashboardPostSchema(BaseDashboardSchema):
     is_managed_externally = fields.Boolean(allow_none=True, dump_default=False)
     external_url = fields.String(allow_none=True)
 
+
 class DashboardCopySchema(Schema):
     dashboard_title = fields.String(
         metadata={"description": dashboard_title_description},
@@ -360,6 +364,7 @@ class DashboardCopySchema(Schema):
             "description": "Whether or not to also copy all charts on the dashboard"
         }
     )
+
 
 class DashboardPutSchema(BaseDashboardSchema):
     dashboard_title = fields.String(
@@ -404,9 +409,16 @@ class DashboardPutSchema(BaseDashboardSchema):
         fields.Integer(metadata={"description": tags_description}, allow_none=True)
     )
 
-class DashboardPatchSchema(DashboardPutSchema):
+
+class DashboardPatchSchema(BaseDashboardSchema):
+    add = fields.List(fields.Raw(), allow_none=True)
+    remove = fields.List(fields.String(), allow_none=True)
+    modified = fields.List(fields.Raw(), allow_none=True)
+    reordered = fields.List(fields.String(), allow_none=True)
     json_metadata = fields.String(
-        allow_none=True, validate=validate_partial_json_metadata, metadata={"description": json_metadata_description}
+        allow_none=True,
+        validate=validate_partial_json_metadata,
+        metadata={"description": json_metadata_description},
     )
 
     @validates_schema

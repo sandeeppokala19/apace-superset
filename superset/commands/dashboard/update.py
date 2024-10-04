@@ -28,12 +28,11 @@ from superset.commands.dashboard.exceptions import (
     DashboardForbiddenError,
     DashboardInvalidError,
     DashboardNotFoundError,
-    DashboardSlugExistsValidationError,
     DashboardPatchFailedError,
+    DashboardSlugExistsValidationError,
     DashboardUpdateFailedError,
 )
 from superset.commands.utils import populate_roles, update_tags, validate_tags
-from superset.constants import RouteMethod
 from superset.daos.dashboard import DashboardDAO
 from superset.daos.report import ReportScheduleDAO
 from superset.exceptions import SupersetSecurityException
@@ -62,7 +61,7 @@ class UpdateDashboardCommand(UpdateMixin, BaseCommand):
         # Update tags
         if (tags := self._properties.pop("tags", None)) is not None:
             update_tags(ObjectType.dashboard, self._model.id, self._model.tags, tags)
-        
+
         dashboard = DashboardDAO.update(self._model, self._properties)
         if self._properties.get("json_metadata"):
             DashboardDAO.set_dash_metadata(
@@ -188,8 +187,13 @@ class UpdateDashboardCommand(UpdateMixin, BaseCommand):
         deleted_tabs = find_deleted_tabs()
         reports = find_reports_containing_tabs(deleted_tabs)
         deactivate_reports(reports)
-        
-class PatchDashboardCommand(UpdateDashboardCommand):
+
+
+class PatchDashboardCommand(BaseCommand):
+    def __init__(self, model_id: int, data: dict[str, Any]):
+        self._model_id = model_id
+        self._properties = data.copy()
+        self._model: Optional[Dashboard] = None
 
     @transaction(on_error=partial(on_error, reraise=DashboardPatchFailedError))
     def run(self) -> Model:

@@ -153,7 +153,7 @@ class BaseDAO(Generic[T]):
         :param item: The object to update
         :param attributes: The attributes associated with the object to update
         """
-        
+
         if not item:
             item = cls.model_cls()  # type: ignore  # pylint: disable=not-callable
 
@@ -163,9 +163,9 @@ class BaseDAO(Generic[T]):
 
         if item not in db.session:
             return db.session.merge(item)
-            
+
         return item  # type: ignore
-    
+
     @classmethod
     def patch_update(
         cls,
@@ -176,7 +176,6 @@ class BaseDAO(Generic[T]):
             item = cls.model_cls()  # type: ignore  # pylint: disable=not-callable
         if attributes:
             for key, value in attributes.items():
-                
                 if key == "json_metadata":
                     current_metadata_str = getattr(item, "json_metadata", None)
                     if current_metadata_str:

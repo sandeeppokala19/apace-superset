@@ -28,6 +28,7 @@ from superset.commands.dashboard.exceptions import (
     DashboardAccessDeniedError,
     DashboardForbiddenError,
     DashboardNotFoundError,
+    DashboardUpdateFailedError,
 )
 from superset.daos.base import BaseDAO
 from superset.dashboards.filters import DashboardAccessFilter, is_uuid
@@ -317,6 +318,74 @@ class DashboardDAO(BaseDAO[Dashboard]):
         cls.set_dash_metadata(dash, metadata, old_to_new_slice_ids)
         db.session.add(dash)
         return dash
+
+    @classmethod
+    def patch_update(
+        cls,
+        item: Dashboard | None = None,
+        attributes: dict[str, Any] | None = None,
+    ) -> Dashboard:
+        if not item:
+            raise DashboardUpdateFailedError("Dashboard not found")
+        if not attributes:
+            return item
+
+        if "json_metadata" in attributes:
+            current_metadata = json.loads(item.json_metadata or "{}")
+            new_metadata = json.loads(attributes["json_metadata"])
+            current_metadata.update(new_metadata)
+            item.json_metadata = json.dumps(current_metadata)
+
+        if any(
+            key in attributes for key in ["added", "modified", "deleted", "reordered"]
+        ):
+            metadata = json.loads(item.json_metadata or "{}")
+            native_filter_configuration = metadata.get(
+                "native_filter_configuration", []
+            )
+
+            native_filter_configuration.extend(attributes.get("added", []))
+
+            for modified_filter in attributes.get("modified", []):
+                filter_id = modified_filter.get("id")
+                for existing_filter in native_filter_configuration:
+                    if existing_filter.get("id") == filter_id:
+                        existing_filter.update(modified_filter)
+                        break
+
+            deleted_filter_ids = set(attributes.get("deleted", []))
+            native_filter_configuration = [
+                filter_config
+                for filter_config in native_filter_configuration
+                if filter_config.get("id") not in deleted_filter_ids
+            ]
+
+            reordered_filter_ids = attributes.get("reordered", [])
+            if reordered_filter_ids:
+                filter_map = {
+                    filter_config["id"]: filter_config
+                    for filter_config in native_filter_configuration
+                }
+                native_filter_configuration = [
+                    filter_map[filter_id]
+                    for filter_id in reordered_filter_ids
+                    if filter_id in filter_map
+                ]
+
+            metadata["native_filter_configuration"] = native_filter_configuration
+            item.json_metadata = json.dumps(metadata)
+
+        for key, value in attributes.items():
+            if key not in [
+                "json_metadata",
+                "added",
+                "modified",
+                "deleted",
+                "reordered",
+            ]:
+                setattr(item, key, value)
+
+        return super().patch_update(item, attributes)
 
     @staticmethod
     def add_favorite(dashboard: Dashboard) -> None:
