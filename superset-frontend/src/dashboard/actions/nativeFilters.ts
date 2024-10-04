@@ -45,6 +45,12 @@ export interface SetFilterConfigComplete {
   type: typeof SET_FILTER_CONFIG_COMPLETE;
   filterConfig: FilterConfiguration;
 }
+export const SET_FILTER_CHANGES_COMPLETE = 'SET_FILTER_CHANGES_COMPLETE';
+export interface SetFilterChangesComplete {
+  type: typeof SET_FILTER_CHANGES_COMPLETE;
+  filterChanges: FilterChanges;
+}
+
 export const SET_FILTER_CONFIG_FAIL = 'SET_FILTER_CONFIG_FAIL';
 export interface SetFilterConfigFail {
   type: typeof SET_FILTER_CONFIG_FAIL;
@@ -139,8 +145,8 @@ export const setFilterConfiguration =
         ),
       );
       dispatch({
-        type: SET_FILTER_CONFIG_COMPLETE,
-        cleanedFilterChanges,
+        type: SET_FILTER_CHANGES_COMPLETE,
+        filterChanges: {...cleanedFilterChanges},
       });
       dispatch(
         setDataMaskForFilterConfigComplete(cleanedFilterChanges.modified, oldFilters),
@@ -274,6 +280,7 @@ export function updateCascadeParentIds(
 export type AnyFilterAction =
   | SetFilterConfigBegin
   | SetFilterConfigComplete
+  | SetFilterChangesComplete
   | SetFilterConfigFail
   | SetInScopeStatusOfFilters
   | SetBootstrapData

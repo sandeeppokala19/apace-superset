@@ -19,6 +19,7 @@
 import {
   AnyFilterAction,
   SET_FILTER_CONFIG_COMPLETE,
+  SET_FILTER_CHANGES_COMPLETE,
   SET_IN_SCOPE_STATUS_OF_FILTERS,
   SET_FOCUSED_NATIVE_FILTER,
   UNSET_FOCUSED_NATIVE_FILTER,
@@ -48,7 +49,55 @@ export function getInitialState({
     state.filters = prevState?.filters ?? {};
   }
   state.focusedFilterId = undefined;
+  console.log(state)
   return state as NativeFiltersState;
+}
+
+function handleFilterChangesComplete(state: NativeFiltersState, changes: {
+  added: any[],
+  modified: any[],
+  deleted: any[],
+  reordered: any[],
+}) {
+  const { added = [], modified = [], deleted = [], reordered = [] } = changes;
+
+  let updatedFilters = state.filters;
+
+  if (deleted.length > 0) {
+    updatedFilters = Object.fromEntries(
+      Object.entries(updatedFilters).filter(
+        ([filterId]) => !deleted.some(deletedFilter => deletedFilter.id === filterId)
+      )
+    );
+  }
+
+  if (added.length > 0) {
+    const addedFilters = Object.fromEntries(added.map(filter => [filter.id, filter]));
+    updatedFilters = { ...updatedFilters, ...addedFilters };
+  }
+
+  if (modified.length > 0) {
+    updatedFilters = Object.fromEntries(
+      Object.entries(updatedFilters).map(([filterId, filter]) => {
+        const modifiedFilter = modified.find(mod => mod.id === filterId);
+        return [filterId, modifiedFilter ? { ...filter, ...modifiedFilter } : filter];
+      })
+    );
+  }
+
+  if (reordered.length > 0) {
+    updatedFilters = Object.fromEntries(
+      reordered.map(reorderedFilter => [
+        reorderedFilter.id,
+        updatedFilters[reorderedFilter.id],
+      ]).filter(([, filter]) => filter) 
+    );
+  }
+
+  return {
+    ...state,
+    filters: updatedFilters,
+  };
 }
 
 export default function nativeFilterReducer(
@@ -65,7 +114,11 @@ export default function nativeFilterReducer(
 
     case SET_FILTER_CONFIG_COMPLETE:
     case SET_IN_SCOPE_STATUS_OF_FILTERS:
+      console.log(action)
       return getInitialState({ filterConfig: action.filterConfig, state });
+
+    case SET_FILTER_CHANGES_COMPLETE:
+      return handleFilterChangesComplete(state, action.filterChanges)
 
     case SET_FOCUSED_NATIVE_FILTER:
       return {
