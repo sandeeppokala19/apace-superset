@@ -26,7 +26,7 @@ import { Dispatch } from 'redux';
 import { cloneDeep } from 'lodash';
 import {
   SET_DATA_MASK_FOR_FILTER_CONFIG_FAIL,
-  setDataMaskForFilterConfigComplete,
+  setDataMaskForFilterChangesComplete,
 } from 'src/dataMask/actions';
 import { areObjectsEqual } from 'src/reduxUtils';
 import { HYDRATE_DASHBOARD } from './hydrate';
@@ -149,7 +149,7 @@ export const setFilterConfiguration =
         filterChanges: {...cleanedFilterChanges},
       });
       dispatch(
-        setDataMaskForFilterConfigComplete(cleanedFilterChanges.modified, oldFilters),
+        setDataMaskForFilterChangesComplete(cleanedFilterChanges, oldFilters),
       );
     } catch (err) {
       console.log("FAILED")

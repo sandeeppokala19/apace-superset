@@ -18,6 +18,7 @@
  */
 import { DataMask, FilterConfiguration, Filters } from '@superset-ui/core';
 import { getInitialDataMask } from './reducer';
+import { FilterChanges } from 'src/dashboard/components/nativeFilters/FiltersConfigModal/types';
 
 export const CLEAR_DATA_MASK_STATE = 'CLEAR_DATA_MASK_STATE';
 export interface ClearDataMaskState {
@@ -40,9 +41,18 @@ export interface INITDATAMASK {
 export const SET_DATA_MASK_FOR_FILTER_CONFIG_COMPLETE =
   'SET_DATA_MASK_FOR_FILTER_CONFIG_COMPLETE';
 
+
 export interface SetDataMaskForFilterConfigComplete {
   type: typeof SET_DATA_MASK_FOR_FILTER_CONFIG_COMPLETE;
   filterConfig: FilterConfiguration;
+  filters?: Filters;
+}
+
+export const SET_DATA_MASK_FOR_FILTER_CHANGES_COMPLETE =
+'SET_DATA_MASK_FOR_FILTER_CHANGES_COMPLETE';
+export interface SetDataMaskForFilterChangesComplete {
+  type: typeof SET_DATA_MASK_FOR_FILTER_CHANGES_COMPLETE;
+  filterChanges: FilterChanges;
   filters?: Filters;
 }
 
@@ -63,6 +73,18 @@ export function setDataMaskForFilterConfigComplete(
     filters,
   };
 }
+
+export function setDataMaskForFilterChangesComplete(
+  filterChanges: FilterChanges,
+  filters?: Filters,
+): SetDataMaskForFilterChangesComplete {
+  return {
+    type: SET_DATA_MASK_FOR_FILTER_CHANGES_COMPLETE,
+    filterChanges,
+    filters,
+  };
+}
+
 export function updateDataMask(
   filterId: string | number,
   dataMask: DataMask,
@@ -88,4 +110,5 @@ export type AnyDataMaskAction =
   | ClearDataMaskState
   | UpdateDataMask
   | SetDataMaskForFilterConfigFail
-  | SetDataMaskForFilterConfigComplete;
+  | SetDataMaskForFilterConfigComplete
+  | SetDataMaskForFilterChangesComplete;

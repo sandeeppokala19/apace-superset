@@ -35,6 +35,7 @@ import { HYDRATE_DASHBOARD } from 'src/dashboard/actions/hydrate';
 import {
   AnyDataMaskAction,
   CLEAR_DATA_MASK_STATE,
+  SET_DATA_MASK_FOR_FILTER_CHANGES_COMPLETE,
   SET_DATA_MASK_FOR_FILTER_CONFIG_COMPLETE,
   UPDATE_DATA_MASK,
 } from './actions';
@@ -100,6 +101,71 @@ function fillNativeFilters(
   });
 }
 
+function updateDataMaskForFilterChanges(
+  filterChanges: { added: Filter[]; modified: Filter[]; deleted: string[]; reordered: string[] }, // filterChanges object
+  mergedDataMask: DataMaskStateWithId,
+  draftDataMask: DataMaskStateWithId,
+  initialDataMask?: DataMaskStateWithId,
+  currentFilters?: Filters
+) {
+  const { added = [], modified = [], deleted = [], reordered = [] } = filterChanges;
+
+  added.forEach(filter => {
+    const dataMask = initialDataMask || {};
+    mergedDataMask[filter.id] = {
+      ...getInitialDataMask(filter.id), // take initial data
+      ...filter.defaultDataMask,        // if something new came from BE - take it
+      ...dataMask[filter.id],           // merge with existing initial data mask
+    };
+  });
+
+  modified.forEach(filter => {
+    const dataMask = initialDataMask || {};
+    mergedDataMask[filter.id] = {
+      ...mergedDataMask[filter.id], 
+      ...filter.defaultDataMask,    
+      ...dataMask[filter.id],       
+    };
+    
+    if (
+      currentFilters &&
+      !areObjectsEqual(
+        filter.defaultDataMask,
+        currentFilters[filter.id]?.defaultDataMask,
+        { ignoreUndefined: true },
+      )
+    ) {
+      mergedDataMask[filter.id] = {
+        ...mergedDataMask[filter.id],
+        ...filter.defaultDataMask,
+      };
+    }
+  });
+
+  deleted.forEach(filterId => {
+    delete mergedDataMask[filterId]; 
+  });
+
+  if (reordered.length > 0) {
+    const reorderedDataMask = {};
+    reordered.forEach(filterId => {
+      if (mergedDataMask[filterId]) {
+        reorderedDataMask[filterId] = mergedDataMask[filterId]; 
+      }
+    });
+    mergedDataMask = reorderedDataMask; 
+  }
+
+  Object.values(draftDataMask).forEach(filter => {
+    if (!String(filter?.id).startsWith(NATIVE_FILTER_PREFIX)) {
+      mergedDataMask[filter?.id] = filter;
+    }
+  });
+
+  return mergedDataMask;
+}
+
+
 const dataMaskReducer = produce(
   (draft: DataMaskStateWithId, action: AnyDataMaskAction) => {
     const cleanState = {};
@@ -143,6 +209,14 @@ const dataMaskReducer = produce(
           draft,
           action.filters,
         );
+        return cleanState;
+      case SET_DATA_MASK_FOR_FILTER_CHANGES_COMPLETE:
+        updateDataMaskForFilterChanges(
+          action.filterChanges,
+          cleanState,
+          draft,
+          action.filters
+        )
         return cleanState;
 
       default:
