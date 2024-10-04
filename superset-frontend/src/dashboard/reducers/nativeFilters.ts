@@ -29,6 +29,7 @@ import {
 } from 'src/dashboard/actions/nativeFilters';
 import { FilterConfiguration, NativeFiltersState } from '@superset-ui/core';
 import { HYDRATE_DASHBOARD } from '../actions/hydrate';
+import { update } from 'lodash';
 
 export function getInitialState({
   filterConfig,
@@ -49,7 +50,6 @@ export function getInitialState({
     state.filters = prevState?.filters ?? {};
   }
   state.focusedFilterId = undefined;
-  console.log(state)
   return state as NativeFiltersState;
 }
 
@@ -61,14 +61,14 @@ function handleFilterChangesComplete(state: NativeFiltersState, changes: {
 }) {
   const { added = [], modified = [], deleted = [], reordered = [] } = changes;
 
-  let updatedFilters = state.filters;
+  let updatedFilters = { ...state.filters };
 
   if (deleted.length > 0) {
-    updatedFilters = Object.fromEntries(
-      Object.entries(updatedFilters).filter(
-        ([filterId]) => !deleted.some(deletedFilter => deletedFilter.id === filterId)
-      )
-    );
+    deleted.forEach((id) => {
+      if (updatedFilters[id]) {
+        delete updatedFilters[id]; 
+      }
+    });
   }
 
   if (added.length > 0) {
@@ -87,17 +87,14 @@ function handleFilterChangesComplete(state: NativeFiltersState, changes: {
 
   if (reordered.length > 0) {
     updatedFilters = Object.fromEntries(
-      reordered.map(reorderedFilter => [
-        reorderedFilter.id,
-        updatedFilters[reorderedFilter.id],
-      ]).filter(([, filter]) => filter) 
+      reordered.map(id => [id, updatedFilters[id]]).filter(([, filter]) => filter) 
     );
   }
 
   return {
     ...state,
     filters: updatedFilters,
-  };
+  } as NativeFiltersState;
 }
 
 export default function nativeFilterReducer(
@@ -114,7 +111,6 @@ export default function nativeFilterReducer(
 
     case SET_FILTER_CONFIG_COMPLETE:
     case SET_IN_SCOPE_STATUS_OF_FILTERS:
-      console.log(action)
       return getInitialState({ filterConfig: action.filterConfig, state });
 
     case SET_FILTER_CHANGES_COMPLETE:
