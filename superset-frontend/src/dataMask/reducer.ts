@@ -70,6 +70,7 @@ function fillNativeFilters(
   initialDataMask?: DataMaskStateWithId,
   currentFilters?: Filters,
 ) {
+  console.log(filterConfig)
   filterConfig.forEach((filter: Filter) => {
     const dataMask = initialDataMask || {};
     mergedDataMask[filter.id] = {

@@ -747,7 +747,6 @@ class DashboardRestApi(BaseSupersetModelRestApi):
             last_modified_time = changed_model.changed_on.replace(
                 microsecond=0
             ).timestamp()
-
             response = self.response(
                 200,
                 id=changed_model.id,

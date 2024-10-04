@@ -113,6 +113,7 @@ export const setFilterConfiguration =
     }
     if (isFilterChangesEmpty(cleanedFilterChanges)) {
       console.log("E gol!")
+      return;
     }
      dispatch({
       type: SET_FILTER_CONFIG_BEGIN,
@@ -127,16 +128,17 @@ export const setFilterConfiguration =
       endpoint: `/api/v1/dashboard/${id}`,
     });
 
+    console.log(cleanedFilterChanges)
     try {
       const response = await updateFilters({
-        cleanedFilterChanges
+        ...cleanedFilterChanges
       });
       dispatch(
         dashboardInfoPatched(
           response.result,
         ),
       );
-
+      console.log("Aici_nativ")
       dispatch({
         type: SET_FILTER_CONFIG_COMPLETE,
         cleanedFilterChanges,

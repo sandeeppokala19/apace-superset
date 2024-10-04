@@ -189,11 +189,7 @@ class UpdateDashboardCommand(UpdateMixin, BaseCommand):
         deactivate_reports(reports)
 
 
-class PatchDashboardCommand(BaseCommand):
-    def __init__(self, model_id: int, data: dict[str, Any]):
-        self._model_id = model_id
-        self._properties = data.copy()
-        self._model: Optional[Dashboard] = None
+class PatchDashboardCommand(UpdateDashboardCommand):
 
     @transaction(on_error=partial(on_error, reraise=DashboardPatchFailedError))
     def run(self) -> Model:

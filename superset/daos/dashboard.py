@@ -327,15 +327,7 @@ class DashboardDAO(BaseDAO[Dashboard]):
     ) -> Dashboard:
         if not item:
             raise DashboardUpdateFailedError("Dashboard not found")
-        if not attributes:
-            return item
-
-        if "json_metadata" in attributes:
-            current_metadata = json.loads(item.json_metadata or "{}")
-            new_metadata = json.loads(attributes["json_metadata"])
-            current_metadata.update(new_metadata)
-            item.json_metadata = json.dumps(current_metadata)
-
+        
         if any(
             key in attributes for key in ["added", "modified", "deleted", "reordered"]
         ):

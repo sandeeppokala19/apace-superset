@@ -411,16 +411,11 @@ class DashboardPutSchema(BaseDashboardSchema):
 
 
 class DashboardPatchSchema(BaseDashboardSchema):
-    add = fields.List(fields.Raw(), allow_none=True)
-    remove = fields.List(fields.String(), allow_none=True)
+    added = fields.List(fields.Raw(), allow_none=True)
+    deleted = fields.List(fields.String(), allow_none=True)
     modified = fields.List(fields.Raw(), allow_none=True)
     reordered = fields.List(fields.String(), allow_none=True)
-    json_metadata = fields.String(
-        allow_none=True,
-        validate=validate_partial_json_metadata,
-        metadata={"description": json_metadata_description},
-    )
-
+    
     @validates_schema
     def validate_at_least_one_field(self, data, **kwargs):
         if not data:

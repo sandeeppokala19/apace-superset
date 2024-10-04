@@ -36,29 +36,31 @@ export default function dashboardStateReducer(state = {}, action) {
       };
       case DASHBOARD_INFO_PATCHED: {
         const { added = [], modified = [], deleted = [], reordered = [] } = action.newInfo;
-      
-        let updatedFilters = state.metadata.native_filters_configuration.filter(
-          filter => !deleted.some(deletedFilter => deletedFilter.id === filter.id)
-        );
-      
-        updatedFilters = [...updatedFilters, ...added];
-      
-        updatedFilters = updatedFilters.map(filter => {
-          const modifiedFilter = modified.find(mod => mod.id === filter.id);
-          return modifiedFilter ? { ...filter, ...modifiedFilter } : filter;
-        });
-      
+        let updatedFilters = state.metadata.native_filter_configuration;
+        if (deleted.length > 0) {
+          updatedFilters = updatedFilters.filter(
+            filter => !deleted.some(deletedFilter => deletedFilter.id === filter.id)
+          );
+        }
+        if (added.length > 0) {
+          updatedFilters = [...updatedFilters, ...added];
+        }
+        if (modified.length > 0) {
+          updatedFilters = updatedFilters.map(filter => {
+            const modifiedFilter = modified.find(mod => mod.id === filter.id);
+            return modifiedFilter ? { ...filter, ...modifiedFilter } : filter;
+          });
+        }
         if (reordered.length > 0) {
           updatedFilters = reordered.map(reorderedFilter => 
             updatedFilters.find(filter => filter.id === reorderedFilter.id)
           ).filter(Boolean);  
         }
-      
         return {
           ...state,
           metadata: {
             ...state.metadata,
-            native_filters_configuration: updatedFilters,
+            native_filter_configuration: updatedFilters,
           },
           last_modified_time: Math.round(new Date().getTime() / 1000),
         };
