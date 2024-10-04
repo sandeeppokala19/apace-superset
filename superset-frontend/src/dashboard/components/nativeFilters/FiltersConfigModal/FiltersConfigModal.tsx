@@ -337,7 +337,6 @@ function FiltersConfigModal({
     setRemovedFilters(DEFAULT_REMOVED_FILTERS);
     setSaveAlertVisible(false);
     setFormValues(DEFAULT_FORM_VALUES);
-    console.log(filterChanges)
     resetFilterChanges()
     resetHistoryOfModifications()
     setErroredFilters(DEFAULT_EMPTY_FILTERS);
@@ -423,23 +422,23 @@ function FiltersConfigModal({
       }
     });
   }
-  const mergedFilterConfigMap = Object.keys(filterConfigMap).reduce(
-    (acc, key) => {
-      const filterFromConfigMap = filterConfigMap[key];
+  const mergedFilterConfigMap = {
+    ...filterConfigMap, // existing filters in filterConfigMap
+    ...Object.keys(filters || {}).reduce((acc, key) => {
       const filterFromValues = filters[key] || {};
+      const filterFromConfigMap = filterConfigMap[key] || {}; 
 
       const mergedFilter = {
         ...filterFromConfigMap, 
-        ...filterFromValues,
+        ...filterFromValues,    
       };
 
       return {
         ...acc,
-        [key]: mergedFilter,
+        [key]: mergedFilter,  
       };
-    },
-    {},
-  );
+    }, {}),
+  };
   // Clean up the filterConfigMap and cascadeParentIds
   const updatedFilterConfigMap = Object.keys(mergedFilterConfigMap).reduce(
     (acc, key) => {

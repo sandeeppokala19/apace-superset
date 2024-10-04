@@ -359,7 +359,7 @@ test('filters are draggable', async () => {
     do not displays cancel message when there are no pending operations
 */
 
-test.skip('deletes a filter', async () => {
+test('deletes a filter', async () => {
   const nativeFilterState = [
     buildNativeFilter('NATIVE_FILTER-1', 'state', ['NATIVE_FILTER-2']),
     buildNativeFilter('NATIVE_FILTER-2', 'country', []),
@@ -397,7 +397,7 @@ test.skip('deletes a filter', async () => {
   );
 });
 
-test.skip('deletes a filter including dependencies', async () => {
+test('deletes a filter including dependencies', async () => {
   const nativeFilterState = [
     buildNativeFilter('NATIVE_FILTER-1', 'state', ['NATIVE_FILTER-2']),
     buildNativeFilter('NATIVE_FILTER-2', 'country', []),

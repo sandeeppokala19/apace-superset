@@ -160,6 +160,8 @@ export const validateForm = async (
     values,
   ) =>
   async () => {
+      console.log(values)
+      console.log(filterChanges)
       const transformFilter = (id: string) => {
         const formInputs = values[id];
         
