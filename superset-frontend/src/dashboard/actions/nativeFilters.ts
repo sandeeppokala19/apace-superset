@@ -138,7 +138,6 @@ export const setFilterConfiguration =
           response.result,
         ),
       );
-      console.log("Aici_nativ")
       dispatch({
         type: SET_FILTER_CONFIG_COMPLETE,
         cleanedFilterChanges,
