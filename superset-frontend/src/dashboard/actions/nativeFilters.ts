@@ -112,14 +112,14 @@ export const setFilterConfiguration =
     const cleanedFilterChanges = filterChanges;
     if (filterChanges.modified.length !== 0) {
       const mergedFilters = mergeFilters(oldFilters, filterChanges.modified);
-      const cleanedFilterChanges = cleanModifiedFilters(
+      cleanedFilterChanges = cleanModifiedFilters(
         oldFilters,
         filterChanges,
         mergedFilters,
       );
     }
     if (isFilterChangesEmpty(cleanedFilterChanges)) {
-      console.log('E gol!');
+      console.log('There are no changes to be made!');
       return;
     }
     dispatch({

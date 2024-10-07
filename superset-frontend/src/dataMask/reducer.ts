@@ -183,7 +183,7 @@ function updateDataMaskForFilterChanges(
       mergedDataMask[filter?.id] = filter;
     }
   });
-
+  
   return mergedDataMask;
 }
 
