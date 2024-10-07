@@ -35,8 +35,12 @@ const SCROLL_BAR_HEIGHT = 15;
 // See https://stackoverflow.com/a/30987109 for more details
 const ONLY_NUMBER_REGEX = /^(NaN|-?((\d*\.\d+|\d+)([Ee][+-]?\d+)?|Infinity))$/;
 
-const StyledFilterableTable = styled.div`
-  ${({ theme }) => `
+interface StyledFilterableTableProps {
+  disableTextSelection?: boolean;
+}
+
+const StyledFilterableTable = styled.div<StyledFilterableTableProps>`
+  ${({ theme, disableTextSelection }) => `
     height: 100%;
     overflow: hidden;
 
@@ -50,6 +54,7 @@ const StyledFilterableTable = styled.div`
       min-width: 0px;
       align-self: center;
       font-size: ${theme.typography.sizes.s}px;
+      user-select: ${disableTextSelection ? 'auto' : 'none'};
     }
 
     .even-row {
@@ -83,6 +88,7 @@ export interface FilterableTableProps {
   striped?: boolean;
   expandedColumns?: string[];
   allowHTML?: boolean;
+  disableTextSelection?: boolean;
 }
 
 const FilterableTable = ({
@@ -92,6 +98,7 @@ const FilterableTable = ({
   filterText = '',
   expandedColumns = [],
   allowHTML = true,
+  disableTextSelection,
 }: FilterableTableProps) => {
   const formatTableData = (data: Record<string, unknown>[]): Datum[] =>
     data.map(row => {
@@ -254,6 +261,7 @@ const FilterableTable = ({
       className="filterable-table-container"
       data-test="table-container"
       ref={container}
+      disableTextSelection={disableTextSelection}
     >
       {fitted && (
         <Table

@@ -265,6 +265,8 @@ const ResultSet = ({
     setSearchText(event.target.value);
   };
 
+  const canExportData = findPermission('can_export_csv', 'SQLLab', user?.roles);
+
   const createExploreResultsOnClick = async (clickEvent: MouseEvent) => {
     const { results } = query;
 
@@ -311,13 +313,6 @@ const ResultSet = ({
         templateParams: query?.templateParams,
         schema: query?.schema,
       };
-
-      const canExportData = findPermission(
-        'can_export_csv',
-        'SQLLab',
-        user?.roles,
-      );
-
       return (
         <ResultSetControls>
           <SaveDatasetModal
@@ -696,6 +691,7 @@ const ResultSet = ({
             filterText={searchText}
             expandedColumns={expandedColumns}
             allowHTML={allowHTML}
+            disableTextSelection={canExportData}
           />
         </ResultContainer>
       );
