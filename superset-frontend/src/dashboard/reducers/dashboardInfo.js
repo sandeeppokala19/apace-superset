@@ -41,7 +41,7 @@ export default function dashboardStateReducer(state = {}, action) {
         deleted = [],
         reordered = [],
       } = action.newInfo;
-      let updatedFilters = state.metadata.native_filter_configuration;
+      let updatedFilters = state.metadata.native_filter_configuration || [];
       if (deleted.length > 0) {
         updatedFilters = updatedFilters.filter(
           filter =>

@@ -47,7 +47,7 @@ export const FilterConfigurationLink: FC<FCBProps> = ({
 }) => {
   const dispatch = useDispatch();
   const [isOpen, setOpen] = useState(false);
-
+  console.log(createNewOnOpen)
   const close = useCallback(() => {
     setOpen(false);
   }, [setOpen]);

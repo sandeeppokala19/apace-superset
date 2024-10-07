@@ -117,7 +117,6 @@ export const setFilterConfiguration =
         filterChanges,
         mergedFilters,
       );
-      console.log(cleanedFilterChanges);
     }
     if (isFilterChangesEmpty(cleanedFilterChanges)) {
       console.log('E gol!');
@@ -136,7 +135,6 @@ export const setFilterConfiguration =
       endpoint: `/api/v1/dashboard/${id}`,
     });
 
-    console.log(cleanedFilterChanges);
     try {
       const response = await updateFilters({
         ...cleanedFilterChanges,
@@ -150,7 +148,6 @@ export const setFilterConfiguration =
         setDataMaskForFilterChangesComplete(cleanedFilterChanges, oldFilters),
       );
     } catch (err) {
-      console.log('FAILED');
       dispatch({
         type: SET_FILTER_CONFIG_FAIL,
         filterConfig: cleanedFilterChanges,
