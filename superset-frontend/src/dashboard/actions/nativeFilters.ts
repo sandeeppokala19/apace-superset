@@ -79,25 +79,26 @@ const mergeFilters = (
     return merged;
   }, {});
 
-const cleanModifiedFilters = (prevState, filterChanges, mergedFilters) => {
-  const modifiedCopy = filterChanges.modified.filter(newFilter => {
-    const { id } = newFilter;
-
-    const oldFilter = prevState[id];
-    const mergedFilter = mergedFilters[id];
-
-    const stateComparison = areObjectsEqual(mergedFilter, oldFilter, {
-      ignoreUndefined: true,
+  const cleanModifiedFilters = (prevState, filterChanges, mergedFilters) => {
+    filterChanges.modified = filterChanges.modified.filter(newFilter => {
+      const { id } = newFilter;
+  
+      const oldFilter = prevState[id];
+      const mergedFilter = mergedFilters[id];
+  
+      const stateComparison = areObjectsEqual(mergedFilter, oldFilter, {
+        ignoreUndefined: true,
+      });
+  
+      if (stateComparison) {
+        return false;
+      }
+  
+      return true;
     });
-
-    return !stateComparison;
-  });
-
-  return {
-    ...filterChanges,
-    modified: modifiedCopy,
+  
+    return filterChanges;
   };
-};
 
 const isFilterChangesEmpty = filterChanges =>
   Object.values(filterChanges).every(
@@ -109,7 +110,7 @@ export const setFilterConfiguration =
   async (dispatch: Dispatch, getState: () => any) => {
     const { id } = getState().dashboardInfo;
     const oldFilters = getState().nativeFilters?.filters;
-    const cleanedFilterChanges = filterChanges;
+    let cleanedFilterChanges = filterChanges;
     if (filterChanges.modified.length !== 0) {
       const mergedFilters = mergeFilters(oldFilters, filterChanges.modified);
       cleanedFilterChanges = cleanModifiedFilters(
@@ -134,7 +135,7 @@ export const setFilterConfiguration =
       method: 'PATCH',
       endpoint: `/api/v1/dashboard/${id}`,
     });
-
+    console.log(oldFilters)
     try {
       const response = await updateFilters({
         ...cleanedFilterChanges,

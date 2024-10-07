@@ -122,7 +122,6 @@ function updateDataMaskForFilterChanges(
   } = filterChanges;
 
   mergedDataMask = { ...oldFilters, ...mergedDataMask };
-
   const dataMask = initialDataMask || {};
 
   added.forEach(filter => {
@@ -182,9 +181,7 @@ function updateDataMaskForFilterChanges(
     if (!String(filter?.id).startsWith(NATIVE_FILTER_PREFIX)) {
       mergedDataMask[filter?.id] = filter;
     }
-  });
-  
-  return mergedDataMask;
+  });  
 }
 
 const dataMaskReducer = produce(
