@@ -653,11 +653,6 @@ function FiltersConfigModal({
           Object.values(changes.filters).some(
             (filter: any) => filter.title && filter.title !== null,
           );
-        if (changes.filters) {
-          Object.keys(changes.filters).forEach(filterId => {
-            handleModifyFilter(filterId);
-          });
-        }
         if (didChangeFilterName || didChangeSectionTitle) {
           // we only need to set this if a name/title changed
           setFormValues(values);
@@ -712,7 +707,6 @@ function FiltersConfigModal({
                 expanded={expanded}
                 ref={configFormRef}
                 form={form}
-                onPatchUpdate={handleModifyFilter}
                 filterId={id}
                 filterToEdit={filterConfigMap[id] as Filter}
                 removedFilters={removedFilters}
@@ -725,6 +719,7 @@ function FiltersConfigModal({
                 setErroredFilters={setErroredFilters}
                 validateDependencies={validateDependencies}
                 getDependencySuggestion={getDependencySuggestion}
+                onPatchUpdate={handleModifyFilter}
               />
             )}
           </div>

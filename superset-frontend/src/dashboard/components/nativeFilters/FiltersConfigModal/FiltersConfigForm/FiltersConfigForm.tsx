@@ -420,12 +420,23 @@ const FiltersConfigForm = (
     filterToEdit?.targets[0]?.datasetId ??
     mostUsedDataset(loadedDatasets, charts);
 
+  const formChanged = useCallback(() => {
+    form.setFields([
+      {
+        name: 'changed',
+        value: true,
+      },
+    ]);
+    handlePatchUpdate();
+  }, [form, handlePatchUpdate]);
+
   const { controlItems = {}, mainControlItems = {} } = formFilter
     ? getControlItemsMap({
         expanded,
         datasetId,
         disabled: false,
         forceUpdate,
+        formChanged,
         form,
         filterId,
         filterType: formFilter?.filterType,
@@ -564,16 +575,6 @@ const FiltersConfigForm = (
 
   const showDataset =
     !datasetId || datasetDetails || formFilter?.dataset?.label;
-
-  const formChanged = useCallback(() => {
-    form.setFields([
-      {
-        name: 'changed',
-        value: true,
-      },
-    ]);
-    handlePatchUpdate();
-  }, [form]);
 
   const updateFormValues = useCallback(
     (values: any) => {
@@ -803,6 +804,7 @@ const FiltersConfigForm = (
             granularity_sqla: column,
           });
           forceUpdate();
+          formChanged();
         }}
       />
     </StyledRowFormItem>
@@ -826,7 +828,7 @@ const FiltersConfigForm = (
             hidden
             initialValue={NativeFilterType.NativeFilter}
           >
-            <Input />
+            <Input onChange={formChanged} />
           </StyledFormItem>
           <StyledFormItem
             expanded={expanded}
@@ -835,7 +837,10 @@ const FiltersConfigForm = (
             initialValue={filterToEdit?.name}
             rules={[{ required: !isRemoved, message: t('Name is required') }]}
           >
-            <Input {...getFiltersConfigModalTestId('name-input')} />
+            <Input
+              {...getFiltersConfigModalTestId('name-input')}
+              onChange={formChanged}
+            />
           </StyledFormItem>
           <StyledFormItem
             expanded={expanded}
@@ -879,6 +884,7 @@ const FiltersConfigForm = (
                   column: null,
                 });
                 forceUpdate();
+                formChanged();
               }}
             />
           </StyledFormItem>
@@ -929,6 +935,7 @@ const FiltersConfigForm = (
                       });
                     }
                     forceUpdate();
+                    formChanged();
                   }}
                 />
               </StyledFormItem>
@@ -1027,6 +1034,7 @@ const FiltersConfigForm = (
                             adhoc_filters: filters,
                           });
                           forceUpdate();
+                          formChanged();
                           validatePreFilter();
                         }}
                         label={
@@ -1059,6 +1067,7 @@ const FiltersConfigForm = (
                               time_range: timeRange,
                             });
                             forceUpdate();
+                            formChanged();
                             validatePreFilter();
                           }}
                         />
@@ -1094,6 +1103,7 @@ const FiltersConfigForm = (
                       <Radio.Group
                         onChange={value => {
                           onSortChanged(value.target.value);
+                          formChanged();
                         }}
                       >
                         <Radio value>{t('Sort ascending')}</Radio>
@@ -1133,6 +1143,7 @@ const FiltersConfigForm = (
                               });
                               forceUpdate();
                             }
+                            formChanged();
                           }}
                         />
                       </StyledRowSubFormItem>
@@ -1165,9 +1176,10 @@ const FiltersConfigForm = (
                       }
                     >
                       <Radio.Group
-                        onChange={value =>
-                          onEnableSingleValueChanged(value.target.value)
-                        }
+                        onChange={value => {
+                          onEnableSingleValueChanged(value.target.value);
+                          formChanged();
+                        }}
                       >
                         <Radio value={SingleValueType.Minimum}>
                           {t('Minimum')}
@@ -1196,7 +1208,7 @@ const FiltersConfigForm = (
               initialValue={filterToEdit?.description}
               label={<StyledLabel>{t('Description')}</StyledLabel>}
             >
-              <TextArea />
+              <TextArea onChange={formChanged} />
             </StyledFormItem>
             <CleanFormItem
               name={['filters', filterId, 'defaultValueQueriesData']}
