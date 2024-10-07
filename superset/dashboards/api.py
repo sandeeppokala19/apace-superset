@@ -57,6 +57,8 @@ from superset.commands.dashboard.importers.dispatcher import ImportDashboardsCom
 from superset.commands.dashboard.permalink.create import CreateDashboardPermalinkCommand
 from superset.commands.dashboard.unfave import DelFavoriteDashboardCommand
 from superset.commands.dashboard.update import UpdateDashboardCommand, PatchDashboardCommand
+from superset.commands.database.exceptions import DatasetValidationError
+
 from superset.commands.exceptions import TagForbiddenError
 from superset.commands.importers.exceptions import NoValidFilesFoundError
 from superset.commands.importers.v1.utils import get_contents_from_bundle
@@ -117,6 +119,7 @@ from superset.views.base_api import (
     requires_json,
     statsd_metrics,
 )
+from superset.views.error_handling import handle_api_exception
 from superset.views.filters import (
     BaseFilterRelatedRoles,
     BaseFilterRelatedUsers,
@@ -371,7 +374,7 @@ class DashboardRestApi(BaseSupersetModelRestApi):
 
     @expose("/<id_or_slug>/datasets", methods=("GET",))
     @protect()
-    @safe
+    @handle_api_exception
     @statsd_metrics
     @event_logger.log_this_with_context(
         action=lambda self, *args, **kwargs: f"{self.__class__.__name__}.get_datasets",
@@ -419,15 +422,7 @@ class DashboardRestApi(BaseSupersetModelRestApi):
             ]
             return self.response(200, result=result)
         except (TypeError, ValueError) as err:
-            return self.response_400(
-                message=gettext(
-                    "Dataset schema is invalid, caused by: %(error)s", error=str(err)
-                )
-            )
-        except DashboardAccessDeniedError:
-            return self.response_403()
-        except DashboardNotFoundError:
-            return self.response_404()
+            raise DatasetValidationError(err) from err
 
     @expose("/<id_or_slug>/tabs", methods=("GET",))
     @protect()
