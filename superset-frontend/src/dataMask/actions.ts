@@ -17,8 +17,8 @@
  * under the License.
  */
 import { DataMask, FilterConfiguration, Filters } from '@superset-ui/core';
-import { getInitialDataMask } from './reducer';
 import { FilterChanges } from 'src/dashboard/components/nativeFilters/FiltersConfigModal/types';
+import { getInitialDataMask } from './reducer';
 
 export const CLEAR_DATA_MASK_STATE = 'CLEAR_DATA_MASK_STATE';
 export interface ClearDataMaskState {
@@ -41,7 +41,6 @@ export interface INITDATAMASK {
 export const SET_DATA_MASK_FOR_FILTER_CONFIG_COMPLETE =
   'SET_DATA_MASK_FOR_FILTER_CONFIG_COMPLETE';
 
-
 export interface SetDataMaskForFilterConfigComplete {
   type: typeof SET_DATA_MASK_FOR_FILTER_CONFIG_COMPLETE;
   filterConfig: FilterConfiguration;
@@ -49,7 +48,7 @@ export interface SetDataMaskForFilterConfigComplete {
 }
 
 export const SET_DATA_MASK_FOR_FILTER_CHANGES_COMPLETE =
-'SET_DATA_MASK_FOR_FILTER_CHANGES_COMPLETE';
+  'SET_DATA_MASK_FOR_FILTER_CHANGES_COMPLETE';
 export interface SetDataMaskForFilterChangesComplete {
   type: typeof SET_DATA_MASK_FOR_FILTER_CHANGES_COMPLETE;
   filterChanges: FilterChanges;

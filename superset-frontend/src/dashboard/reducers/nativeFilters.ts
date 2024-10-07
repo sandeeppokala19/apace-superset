@@ -28,8 +28,8 @@ import {
   UPDATE_CASCADE_PARENT_IDS,
 } from 'src/dashboard/actions/nativeFilters';
 import { FilterConfiguration, NativeFiltersState } from '@superset-ui/core';
-import { HYDRATE_DASHBOARD } from '../actions/hydrate';
 import { update } from 'lodash';
+import { HYDRATE_DASHBOARD } from '../actions/hydrate';
 
 export function getInitialState({
   filterConfig,
@@ -53,26 +53,31 @@ export function getInitialState({
   return state as NativeFiltersState;
 }
 
-function handleFilterChangesComplete(state: NativeFiltersState, changes: {
-  added: any[],
-  modified: any[],
-  deleted: any[],
-  reordered: any[],
-}) {
+function handleFilterChangesComplete(
+  state: NativeFiltersState,
+  changes: {
+    added: any[];
+    modified: any[];
+    deleted: any[];
+    reordered: any[];
+  },
+) {
   const { added = [], modified = [], deleted = [], reordered = [] } = changes;
 
   let updatedFilters = { ...state.filters };
 
   if (deleted.length > 0) {
-    deleted.forEach((id) => {
+    deleted.forEach(id => {
       if (updatedFilters[id]) {
-        delete updatedFilters[id]; 
+        delete updatedFilters[id];
       }
     });
   }
 
   if (added.length > 0) {
-    const addedFilters = Object.fromEntries(added.map(filter => [filter.id, filter]));
+    const addedFilters = Object.fromEntries(
+      added.map(filter => [filter.id, filter]),
+    );
     updatedFilters = { ...updatedFilters, ...addedFilters };
   }
 
@@ -80,14 +85,19 @@ function handleFilterChangesComplete(state: NativeFiltersState, changes: {
     updatedFilters = Object.fromEntries(
       Object.entries(updatedFilters).map(([filterId, filter]) => {
         const modifiedFilter = modified.find(mod => mod.id === filterId);
-        return [filterId, modifiedFilter ? { ...filter, ...modifiedFilter } : filter];
-      })
+        return [
+          filterId,
+          modifiedFilter ? { ...filter, ...modifiedFilter } : filter,
+        ];
+      }),
     );
   }
 
   if (reordered.length > 0) {
     updatedFilters = Object.fromEntries(
-      reordered.map(id => [id, updatedFilters[id]]).filter(([, filter]) => filter) 
+      reordered
+        .map(id => [id, updatedFilters[id]])
+        .filter(([, filter]) => filter),
     );
   }
 
@@ -114,7 +124,7 @@ export default function nativeFilterReducer(
       return getInitialState({ filterConfig: action.filterConfig, state });
 
     case SET_FILTER_CHANGES_COMPLETE:
-      return handleFilterChangesComplete(state, action.filterChanges)
+      return handleFilterChangesComplete(state, action.filterChanges);
 
     case SET_FOCUSED_NATIVE_FILTER:
       return {

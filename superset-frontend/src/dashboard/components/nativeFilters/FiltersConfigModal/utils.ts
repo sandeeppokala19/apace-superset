@@ -90,132 +90,64 @@ export const validateForm = async (
   }
 };
 
-// export const createHandleSave =
-//   (
-//     filterConfigMap: Record<string, Filter | Divider>,
-//     filterIds: string[],
-//     initialOrder: string[],
-//     removedFilters: Record<string, FilterRemoval>,
-//     saveForm: Function,
-//     filterChanges: FilterChanges,
-//     values: NativeFiltersForm,
-//   ) =>
-//   async () => {
-//     const newFilterConfig: FilterConfiguration = filterIds
-//       .filter(id => !removedFilters[id])
-//       .map(id => {
-//         // create a filter config object from the form inputs
-//         const formInputs = values.filters?.[id];
-//         // if user didn't open a filter, return the original config
-//         if (!formInputs) return filterConfigMap[id];
-//         if (formInputs.type === NativeFilterType.Divider) {
-          
-//           return {
-//             id,
-//             type: NativeFilterType.Divider,
-//             scope: {
-//               rootPath: [DASHBOARD_ROOT_ID],
-//               excluded: [],
-//             },
-//             title: formInputs.title,
-//             description: formInputs.description,
-//           };
-//         }
-//         const target: Partial<NativeFilterTarget> = {};
-//         if (formInputs.dataset) {
-//           target.datasetId = formInputs.dataset.value;
-//         }
-//         if (formInputs.dataset && formInputs.column) {
-//           target.column = { name: formInputs.column };
-//         }
-//         return {
-//           id,
-//           adhoc_filters: formInputs.adhoc_filters,
-//           time_range: formInputs.time_range,
-//           controlValues: formInputs.controlValues ?? {},
-//           granularity_sqla: formInputs.granularity_sqla,
-//           requiredFirst: Object.values(formInputs.requiredFirst ?? {}).find(
-//             rf => rf,
-//           ),
-//           name: formInputs.name,
-//           filterType: formInputs.filterType,
-//           // for now there will only ever be one target
-//           targets: [target],
-//           defaultDataMask: formInputs.defaultDataMask ?? getInitialDataMask(),
-//           cascadeParentIds: formInputs.dependencies || [],
-//           scope: formInputs.scope,
-//           sortMetric: formInputs.sortMetric,
-//           type: formInputs.type,
-//           description: (formInputs.description || '').trim(),
-//         };
-//       });
-//     await saveForm(newFilterConfig, initialOrder, filterIds);
-//   };
+export const createAlternativeHandleSave =
+  (saveForm: Function, filterChanges: FilterChanges, values) => async () => {
+    console.log(values);
+    console.log(filterChanges);
+    const transformFilter = (id: string) => {
+      const formInputs = values[id];
 
-
-  export const createAlternativeHandleSave =
-  (
-    saveForm: Function,
-    filterChanges: FilterChanges,
-    values,
-  ) =>
-  async () => {
-      console.log(values)
-      console.log(filterChanges)
-      const transformFilter = (id: string) => {
-        const formInputs = values[id];
-        
-        if (formInputs.type === NativeFilterType.Divider) {
-          return {
-            id,
-            type: NativeFilterType.Divider,
-            scope: {
-              rootPath: [DASHBOARD_ROOT_ID],
-              excluded: [],
-            },
-            title: formInputs.title,
-            description: formInputs.description,
-          };
-        }
-  
-        const target: Partial<NativeFilterTarget> = {};
-        if (formInputs.dataset) {
-          target.datasetId = formInputs.dataset.value;
-        }
-        if (formInputs.dataset && formInputs.column) {
-          target.column = { name: formInputs.column };
-        }
-  
+      if (formInputs.type === NativeFilterType.Divider) {
         return {
           id,
-          adhoc_filters: formInputs.adhoc_filters,
-          time_range: formInputs.time_range,
-          controlValues: formInputs.controlValues ?? {},
-          granularity_sqla: formInputs.granularity_sqla,
-          requiredFirst: Object.values(formInputs.requiredFirst ?? {}).find(
-            rf => rf,
-          ),
-          name: formInputs.name,
-          filterType: formInputs.filterType,
-          targets: [target],
-          defaultDataMask: formInputs.defaultDataMask ?? getInitialDataMask(),
-          cascadeParentIds: formInputs.dependencies || [],
-          scope: formInputs.scope,
-          sortMetric: formInputs.sortMetric,
-          type: formInputs.type,
-          description: (formInputs.description || '').trim(),
+          type: NativeFilterType.Divider,
+          scope: {
+            rootPath: [DASHBOARD_ROOT_ID],
+            excluded: [],
+          },
+          title: formInputs.title,
+          description: formInputs.description,
         };
-      };
-    
-  const transformedAdded = filterChanges.added.map(transformFilter);
-  const transformedModified = filterChanges.modified.map(transformFilter);
+      }
 
-  const newFilterChanges = {
-    ...filterChanges, 
-    added: transformedAdded,   
-    modified: transformedModified,  
-  };
-    
+      const target: Partial<NativeFilterTarget> = {};
+      if (formInputs.dataset) {
+        target.datasetId = formInputs.dataset.value;
+      }
+      if (formInputs.dataset && formInputs.column) {
+        target.column = { name: formInputs.column };
+      }
+
+      return {
+        id,
+        adhoc_filters: formInputs.adhoc_filters,
+        time_range: formInputs.time_range,
+        controlValues: formInputs.controlValues ?? {},
+        granularity_sqla: formInputs.granularity_sqla,
+        requiredFirst: Object.values(formInputs.requiredFirst ?? {}).find(
+          rf => rf,
+        ),
+        name: formInputs.name,
+        filterType: formInputs.filterType,
+        targets: [target],
+        defaultDataMask: formInputs.defaultDataMask ?? getInitialDataMask(),
+        cascadeParentIds: formInputs.dependencies || [],
+        scope: formInputs.scope,
+        sortMetric: formInputs.sortMetric,
+        type: formInputs.type,
+        description: (formInputs.description || '').trim(),
+      };
+    };
+
+    const transformedAdded = filterChanges.added.map(transformFilter);
+    const transformedModified = filterChanges.modified.map(transformFilter);
+
+    const newFilterChanges = {
+      ...filterChanges,
+      added: transformedAdded,
+      modified: transformedModified,
+    };
+
     await saveForm(newFilterChanges);
   };
 
@@ -257,13 +189,17 @@ export const createHandleRemoveItem =
       ...removedFilters,
       [filterId]: { isPending: true, timerId },
     }));
-    filterChangesRef.current.added = filterChangesRef.current.added.filter(
-      (id: string) => id !== filterId,
-    );
-    filterChangesRef.current.modified = filterChangesRef.current.modified.filter(
-      (id: string) => id !== filterId,
-    );
-    filterChangesRef.current.deleted.push(filterId);
+    const updatedFilterChanges = {
+      ...filterChangesRef.current,
+      added: filterChangesRef.current.added.filter(
+        (id: string) => id !== filterId,
+      ),
+      modified: filterChangesRef.current.modified.filter(
+        (id: string) => id !== filterId,
+      ),
+      deleted: [...filterChangesRef.current.deleted, filterId],
+    };
+    filterChangesRef.current = updatedFilterChanges;
     setSaveAlertVisible(false);
   };
 

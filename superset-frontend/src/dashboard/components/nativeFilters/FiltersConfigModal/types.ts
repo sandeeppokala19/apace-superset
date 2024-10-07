@@ -63,12 +63,12 @@ export interface NativeFiltersForm {
 export interface FilterChanges {
   added: string[];
   modified: string[];
-  deleted: string[];   
-  reordered: string[]; 
+  deleted: string[];
+  reordered: string[];
 }
 
 export interface HistoryOfModifications {
-  added: string[];    // Tracks added filter IDs
+  added: string[]; // Tracks added filter IDs
   modified: string[]; // Tracks modified filter IDs
 }
 

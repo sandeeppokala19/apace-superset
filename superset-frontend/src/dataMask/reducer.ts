@@ -102,21 +102,31 @@ function fillNativeFilters(
 }
 
 function updateDataMaskForFilterChanges(
-  filterChanges: { added: Filter[]; modified: Filter[]; deleted: string[]; reordered: string[] },
+  filterChanges: {
+    added: Filter[];
+    modified: Filter[];
+    deleted: string[];
+    reordered: string[];
+  },
   mergedDataMask: DataMaskStateWithId = {},
   draftDataMask: DataMaskStateWithId,
   initialDataMask?: DataMaskStateWithId,
   currentFilters?: Filters,
-  oldFilters?: DataMaskStateWithId
+  oldFilters?: DataMaskStateWithId,
 ) {
-  const { added = [], modified = [], deleted = [], reordered = [] } = filterChanges;
+  const {
+    added = [],
+    modified = [],
+    deleted = [],
+    reordered = [],
+  } = filterChanges;
 
   mergedDataMask = { ...oldFilters, ...mergedDataMask };
 
   const dataMask = initialDataMask || {};
 
   added.forEach(filter => {
-    mergedDataMask = {  
+    mergedDataMask = {
       ...mergedDataMask,
       [filter.id]: {
         ...getInitialDataMask(filter.id),
@@ -127,7 +137,7 @@ function updateDataMaskForFilterChanges(
   });
 
   modified.forEach(filter => {
-    mergedDataMask = { 
+    mergedDataMask = {
       ...mergedDataMask,
       [filter.id]: {
         ...mergedDataMask[filter.id],
@@ -135,13 +145,13 @@ function updateDataMaskForFilterChanges(
         ...dataMask[filter.id],
       },
     };
-    
+
     if (
       currentFilters &&
       !areObjectsEqual(
         filter.defaultDataMask,
         currentFilters[filter.id]?.defaultDataMask,
-        { ignoreUndefined: true }
+        { ignoreUndefined: true },
       )
     ) {
       mergedDataMask = {
@@ -176,7 +186,6 @@ function updateDataMaskForFilterChanges(
 
   return mergedDataMask;
 }
-
 
 const dataMaskReducer = produce(
   (draft: DataMaskStateWithId, action: AnyDataMaskAction) => {
@@ -227,8 +236,8 @@ const dataMaskReducer = produce(
           action.filterChanges,
           cleanState,
           draft,
-          action.filters
-        )
+          action.filters,
+        );
         return cleanState;
 
       default:

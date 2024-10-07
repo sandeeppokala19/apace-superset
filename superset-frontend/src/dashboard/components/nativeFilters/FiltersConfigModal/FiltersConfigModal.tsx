@@ -44,7 +44,12 @@ import FiltersConfigForm, {
 } from './FiltersConfigForm/FiltersConfigForm';
 import Footer from './Footer/Footer';
 import { useOpenModal, useRemoveCurrentFilter } from './state';
-import { FilterChanges, FilterRemoval, HistoryOfModifications, NativeFiltersForm } from './types';
+import {
+  FilterChanges,
+  FilterRemoval,
+  HistoryOfModifications,
+  NativeFiltersForm,
+} from './types';
 import {
   // createHandleSave,
   createAlternativeHandleSave,
@@ -134,17 +139,15 @@ const DEFAULT_FORM_VALUES: NativeFiltersForm = {
   filters: {},
 };
 const DEFAULT_FILTER_CHANGES: FilterChanges = {
-  added: [],      // Tracks newly added filters
-  modified: [],   // Tracks modified filters and contains their IDS
-  deleted: [],    // Tracks filters marked for deletion
-  reordered: [],  // Tracks the order of filters if reordering occurs
+  added: [], // Tracks newly added filters
+  modified: [], // Tracks modified filters and contains their IDS
+  deleted: [], // Tracks filters marked for deletion
+  reordered: [], // Tracks the order of filters if reordering occurs
 };
 const DEFAULT_HISTORY_MODIFICATIONS: HistoryOfModifications = {
   added: [],
-  modified: []
-}
-
-
+  modified: [],
+};
 
 /**
  * This is the modal to configure all the dashboard-native filters.
@@ -174,7 +177,9 @@ function FiltersConfigModal({
 
   // this state contains the changes that we'll be sent through the PATCH endpoint
   const filterChanges = useRef<FilterChanges>(DEFAULT_FILTER_CHANGES);
-  const historyOfModifications = useRef<HistoryOfModifications>(DEFAULT_HISTORY_MODIFICATIONS)
+  const historyOfModifications = useRef<HistoryOfModifications>(
+    DEFAULT_HISTORY_MODIFICATIONS,
+  );
 
   const resetFilterChanges = () => {
     filterChanges.current.added = [];
@@ -184,19 +189,22 @@ function FiltersConfigModal({
   };
 
   const resetHistoryOfModifications = () => {
-    historyOfModifications.current.added = []
-    historyOfModifications.current.modified = []
-  }
+    historyOfModifications.current.added = [];
+    historyOfModifications.current.modified = [];
+  };
 
   const handleModifyFilter = (filterId: string) => {
     if (!filterChanges.current.modified.includes(filterId)) {
       filterChanges.current.modified.push(filterId);
       console.log('Updated filterChanges:', filterChanges.current);
     }
-  
+
     if (!historyOfModifications.current.modified.includes(filterId)) {
       historyOfModifications.current.modified.push(filterId);
-      console.log('Updated history of modifications:', historyOfModifications.current);
+      console.log(
+        'Updated history of modifications:',
+        historyOfModifications.current,
+      );
     }
   };
 
@@ -247,15 +255,15 @@ function FiltersConfigModal({
       const removal = removedFilters[id];
       // Clear the removal timeout if the filter is pending deletion
       if (removal?.isPending) clearTimeout(removal.timerId);
-  
+
       setRemovedFilters(current => ({ ...current, [id]: null }));
-  
+
       filterChanges.current.deleted = filterChanges.current.deleted.filter(
-        (deletedId) => deletedId !== id
+        deletedId => deletedId !== id,
       );
       const wasAdded = historyOfModifications.current.added.includes(id);
       const wasModified = historyOfModifications.current.modified.includes(id);
-    
+
       if (wasAdded) {
         filterChanges.current.added.push(id);
       } else if (wasModified) {
@@ -326,7 +334,7 @@ function FiltersConfigModal({
     setRemovedFilters,
     setOrderedFilters,
     setSaveAlertVisible,
-    filterChanges
+    filterChanges,
   );
 
   // After this, it should be as if the modal was just opened fresh.
@@ -337,8 +345,8 @@ function FiltersConfigModal({
     setRemovedFilters(DEFAULT_REMOVED_FILTERS);
     setSaveAlertVisible(false);
     setFormValues(DEFAULT_FORM_VALUES);
-    resetFilterChanges()
-    resetHistoryOfModifications()
+    resetFilterChanges();
+    resetHistoryOfModifications();
     setErroredFilters(DEFAULT_EMPTY_FILTERS);
     if (filterIds.length > 0) {
       setActiveFilterPanelKey(getActiveFilterPanelKey(filterIds[0]));
@@ -395,75 +403,76 @@ function FiltersConfigModal({
     [canBeUsedAsDependency, filterIds, getFilterTitle],
   );
 
-  const cleanDeletedParents = (
-  values: NativeFiltersForm | null,
-) => {
-  const filters = values?.filters;
-  if (filters) {
-    Object.keys(filters).forEach(key => {
-      const filter = filters[key];
-      
-      if (!('dependencies' in filter)) {
-        return;  
-      }
+  const cleanDeletedParents = (values: NativeFiltersForm | null) => {
+    const filters = values?.filters;
+    if (filters) {
+      Object.keys(filters).forEach(key => {
+        const filter = filters[key];
 
-      const originalDependencies = filter.dependencies || [];
-      
-      const cleanedDependencies = originalDependencies.filter(id =>
-        canBeUsedAsDependency(id)
-      );
-      
-      if (!isEqual(cleanedDependencies, originalDependencies)) {
-        filters[key] = {
-          ...filter,
-          dependencies: cleanedDependencies, 
+        if (!('dependencies' in filter)) {
+          return;
+        }
+
+        const originalDependencies = filter.dependencies || [];
+
+        const cleanedDependencies = originalDependencies.filter(id =>
+          canBeUsedAsDependency(id),
+        );
+
+        if (!isEqual(cleanedDependencies, originalDependencies)) {
+          filters[key] = {
+            ...filter,
+            dependencies: cleanedDependencies,
+          };
+          handleModifyFilter(key);
+        }
+      });
+    }
+    const mergedFilterConfigMap = {
+      ...filterConfigMap, // existing filters in filterConfigMap
+      ...Object.keys(filters || {}).reduce((acc, key) => {
+        const filterFromValues = filters[key] || {};
+        const filterFromConfigMap = filterConfigMap[key] || {};
+
+        const mergedFilter = {
+          ...filterFromConfigMap,
+          ...filterFromValues,
         };
-        handleModifyFilter(key);
-      }
-    });
-  }
-  const mergedFilterConfigMap = {
-    ...filterConfigMap, // existing filters in filterConfigMap
-    ...Object.keys(filters || {}).reduce((acc, key) => {
-      const filterFromValues = filters[key] || {};
-      const filterFromConfigMap = filterConfigMap[key] || {}; 
 
-      const mergedFilter = {
-        ...filterFromConfigMap, 
-        ...filterFromValues,    
-      };
+        return {
+          ...acc,
+          [key]: mergedFilter,
+        };
+      }, {}),
+    };
+    // Clean up the filterConfigMap and cascadeParentIds
+    const updatedFilterConfigMap = Object.keys(mergedFilterConfigMap).reduce(
+      (acc, key) => {
+        const filter = mergedFilterConfigMap[key];
+        const cascadeParentIds = filter.cascadeParentIds?.filter(id =>
+          canBeUsedAsDependency(id),
+        );
+        if (
+          cascadeParentIds &&
+          !isEqual(cascadeParentIds, filter.cascadeParentIds)
+        ) {
+          dispatch(updateCascadeParentIds(key, cascadeParentIds));
+          handleModifyFilter(key);
+        }
 
-      return {
-        ...acc,
-        [key]: mergedFilter,  
-      };
-    }, {}),
+        return {
+          ...acc,
+          [key]: {
+            ...filter,
+            cascadeParentIds,
+          },
+        };
+      },
+      {},
+    );
+
+    return updatedFilterConfigMap;
   };
-  // Clean up the filterConfigMap and cascadeParentIds
-  const updatedFilterConfigMap = Object.keys(mergedFilterConfigMap).reduce(
-    (acc, key) => {
-      const filter = mergedFilterConfigMap[key];
-      const cascadeParentIds = filter.cascadeParentIds?.filter(id =>
-        canBeUsedAsDependency(id)
-      );
-      if (cascadeParentIds && !isEqual(cascadeParentIds, filter.cascadeParentIds)) {
-        dispatch(updateCascadeParentIds(key, cascadeParentIds));
-        handleModifyFilter(key); 
-      }
-
-      return {
-        ...acc,
-        [key]: {
-          ...filter,
-          cascadeParentIds,
-        },
-      };
-    },
-    {},
-  );
-  
-  return updatedFilterConfigMap;
-};
 
   const handleErroredFilters = useCallback(() => {
     // managing left pane errored filters indicators
@@ -497,21 +506,21 @@ function FiltersConfigModal({
       currentFilterId,
       setCurrentFilterId,
     );
-    
+
     handleErroredFilters();
-    
+
     if (values) {
       const updatedFilterConfigMap = cleanDeletedParents(values);
-  
+
       const filterChangesInRef = filterChanges.current;
-  
+
       const filterIdsInAdded = new Set(filterChangesInRef.added);
-  
+
       const modifiedWithoutAdded = filterChangesInRef.modified.filter(
-        filterId => !filterIdsInAdded.has(filterId)
+        filterId => !filterIdsInAdded.has(filterId),
       );
       filterChangesInRef.modified = modifiedWithoutAdded;
-      
+
       if (filterChangesInRef.reordered) {
         filterChangesInRef.reordered = isEqual(
           filterChangesInRef.reordered,
@@ -520,15 +529,15 @@ function FiltersConfigModal({
           ? []
           : filterChangesInRef.reordered;
       }
-      console.log(filterChangesInRef)
-      console.log(updatedFilterConfigMap)
+      console.log(filterChangesInRef);
+      console.log(updatedFilterConfigMap);
       createAlternativeHandleSave(
         onSave,
-        filterChangesInRef, 
+        filterChangesInRef,
         updatedFilterConfigMap,
       )();
-  
-      resetForm(true); 
+
+      resetForm(true);
     } else {
       configFormRef.current?.changeTab?.('configuration');
     }
@@ -645,7 +654,7 @@ function FiltersConfigModal({
             (filter: any) => filter.title && filter.title !== null,
           );
         if (changes.filters) {
-          Object.keys(changes.filters).forEach((filterId) => {  
+          Object.keys(changes.filters).forEach(filterId => {
             handleModifyFilter(filterId);
           });
         }

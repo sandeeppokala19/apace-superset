@@ -373,7 +373,7 @@ test('deletes a filter', async () => {
     dashboardLayout,
   };
   const onSave = jest.fn();
-  
+
   defaultRender(state, {
     ...props,
     createNewOnOpen: false,
@@ -381,19 +381,19 @@ test('deletes a filter', async () => {
   });
 
   const removeButtons = screen.getAllByRole('img', { name: 'trash' });
-  userEvent.click(removeButtons[2]); 
+  userEvent.click(removeButtons[2]);
 
   userEvent.click(screen.getByRole('button', { name: SAVE_REGEX }));
 
   await waitFor(() =>
     expect(onSave).toHaveBeenCalledWith(
       expect.objectContaining({
-        added: expect.arrayContaining([]), 
-        deleted: expect.arrayContaining(['NATIVE_FILTER-3']),  
-        modified: expect.arrayContaining([]),  
-        reordered: expect.arrayContaining([]),  
+        added: expect.arrayContaining([]),
+        deleted: expect.arrayContaining(['NATIVE_FILTER-3']),
+        modified: expect.arrayContaining([]),
+        reordered: expect.arrayContaining([]),
       }),
-    )
+    ),
   );
 });
 
@@ -423,12 +423,10 @@ test('deletes a filter including dependencies', async () => {
     expect(onSave).toHaveBeenCalledWith(
       // Expect the object passed to `onSave` to contain the modified, deleted
       expect.objectContaining({
-        added: [],  
-        deleted: ['NATIVE_FILTER-2'],  
-        modified: expect.arrayContaining([
-          expect.any(Object),
-        ]), 
-        reordered: []
+        added: [],
+        deleted: ['NATIVE_FILTER-2'],
+        modified: expect.arrayContaining([expect.any(Object)]),
+        reordered: [],
       }),
     ),
   );
@@ -458,10 +456,10 @@ test('deletes a filter including dependencies', async () => {
 //   const addButton = screen.getByText('Add filters and dividers');
 //   userEvent.hover(addButton);
 
-//   const filterOption = await screen.findByRole('menuitem', { name: /filter/i }); 
+//   const filterOption = await screen.findByRole('menuitem', { name: /filter/i });
 //   userEvent.click(filterOption);
 
-//   const filterNameInput = screen.getByRole('textbox', { name: /filter name/i });  
+//   const filterNameInput = screen.getByRole('textbox', { name: /filter name/i });
 //   userEvent.type(filterNameInput, 'New Product Filter');
 
 //   const columnDropdown = screen.getByRole('combobox', { name: /Column select/i });
@@ -470,7 +468,7 @@ test('deletes a filter including dependencies', async () => {
 //   screen.debug();
 
 //   const columnOption = await screen.findByText('state');
-//   userEvent.click(columnOption);  
+//   userEvent.click(columnOption);
 
 //   userEvent.click(screen.getByRole('button', { name: SAVE_REGEX }));
 
@@ -478,7 +476,7 @@ test('deletes a filter including dependencies', async () => {
 //     expect(onSave).toHaveBeenCalledWith(
 //       expect.objectContaining({
 //         added: expect.arrayContaining([
-//           expect.any(String), 
+//           expect.any(String),
 //         ]),
 //       }),
 //     ),
@@ -486,7 +484,5 @@ test('deletes a filter including dependencies', async () => {
 
 //   const callArgs = onSave.mock.calls[0][0];
 //   expect(callArgs.added.length).toBe(1);
-//   expect(typeof callArgs.added[0]).toBe('string'); 
+//   expect(typeof callArgs.added[0]).toBe('string');
 // });
-
-

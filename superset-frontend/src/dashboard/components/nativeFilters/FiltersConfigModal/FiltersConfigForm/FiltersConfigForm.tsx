@@ -306,7 +306,7 @@ export interface FiltersConfigFormProps {
   filterToEdit?: Filter;
   removedFilters: Record<string, FilterRemoval>;
   restoreFilter: (filterId: string) => void;
-  onPatchUpdate: (filterId: string) => void;   
+  onPatchUpdate: (filterId: string) => void;
   form: FormInstance<NativeFiltersForm>;
   getAvailableFilters: (
     filterId: string,
@@ -376,7 +376,7 @@ const FiltersConfigForm = (
 
   const handlePatchUpdate = useCallback(() => {
     if (onPatchUpdate) {
-      onPatchUpdate(filterId); 
+      onPatchUpdate(filterId);
     }
   }, [onPatchUpdate, filterId]);
 
@@ -572,7 +572,7 @@ const FiltersConfigForm = (
         value: true,
       },
     ]);
-    handlePatchUpdate()
+    handlePatchUpdate();
   }, [form]);
 
   const updateFormValues = useCallback(

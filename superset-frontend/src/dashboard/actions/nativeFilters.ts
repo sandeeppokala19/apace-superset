@@ -72,56 +72,58 @@ const mergeFilters = (
     if (oldFilters[id]) {
       return {
         ...merged,
-        [id]: { ...oldFilters[id], ...newFilter },  
+        [id]: { ...oldFilters[id], ...newFilter },
       };
     }
 
     return merged;
   }, {});
 
-  const cleanModifiedFilters = (prevState, filterChanges, mergedFilters) => {
-    filterChanges.modified = filterChanges.modified.filter(newFilter => {
-      const { id } = newFilter;
-  
-      const oldFilter = prevState[id];
-      const mergedFilter = mergedFilters[id];
-  
-      const stateComparison = areObjectsEqual(mergedFilter, oldFilter, {
-        ignoreUndefined: true,  
-      });
-  
-      if (stateComparison) {
-        return false;  
-      }
-  
-      return true;
-    });
-  
-    return filterChanges;
-  };
+const cleanModifiedFilters = (prevState, filterChanges, mergedFilters) => {
+  const modifiedCopy = filterChanges.modified.filter(newFilter => {
+    const { id } = newFilter;
 
-  const isFilterChangesEmpty = (filterChanges) => {
-    return Object.values(filterChanges).every(array => Array.isArray(array) && array.length === 0);
+    const oldFilter = prevState[id];
+    const mergedFilter = mergedFilters[id];
+
+    const stateComparison = areObjectsEqual(mergedFilter, oldFilter, {
+      ignoreUndefined: true,
+    });
+
+    return !stateComparison;
+  });
+
+  return {
+    ...filterChanges,
+    modified: modifiedCopy,
   };
-  
+};
+
+const isFilterChangesEmpty = filterChanges =>
+  Object.values(filterChanges).every(
+    array => Array.isArray(array) && array.length === 0,
+  );
+
 export const setFilterConfiguration =
-  (
-    filterChanges: FilterChanges,
-  ) =>
+  (filterChanges: FilterChanges) =>
   async (dispatch: Dispatch, getState: () => any) => {
     const { id } = getState().dashboardInfo;
     const oldFilters = getState().nativeFilters?.filters;
     const cleanedFilterChanges = filterChanges;
-    if (filterChanges.modified.length != 0) {
+    if (filterChanges.modified.length !== 0) {
       const mergedFilters = mergeFilters(oldFilters, filterChanges.modified);
-      const cleanedFilterChanges = cleanModifiedFilters(oldFilters, filterChanges, mergedFilters)
-      console.log(cleanedFilterChanges)
+      const cleanedFilterChanges = cleanModifiedFilters(
+        oldFilters,
+        filterChanges,
+        mergedFilters,
+      );
+      console.log(cleanedFilterChanges);
     }
     if (isFilterChangesEmpty(cleanedFilterChanges)) {
-      console.log("E gol!")
+      console.log('E gol!');
       return;
     }
-     dispatch({
+    dispatch({
       type: SET_FILTER_CONFIG_BEGIN,
       cleanedFilterChanges,
     });
@@ -134,25 +136,21 @@ export const setFilterConfiguration =
       endpoint: `/api/v1/dashboard/${id}`,
     });
 
-    console.log(cleanedFilterChanges)
+    console.log(cleanedFilterChanges);
     try {
       const response = await updateFilters({
-        ...cleanedFilterChanges
+        ...cleanedFilterChanges,
       });
-      dispatch(
-        dashboardInfoPatched(
-          response.result,
-        ),
-      );
+      dispatch(dashboardInfoPatched(response.result));
       dispatch({
         type: SET_FILTER_CHANGES_COMPLETE,
-        filterChanges: {...cleanedFilterChanges},
+        filterChanges: { ...cleanedFilterChanges },
       });
       dispatch(
         setDataMaskForFilterChangesComplete(cleanedFilterChanges, oldFilters),
       );
     } catch (err) {
-      console.log("FAILED")
+      console.log('FAILED');
       dispatch({
         type: SET_FILTER_CONFIG_FAIL,
         filterConfig: cleanedFilterChanges,
