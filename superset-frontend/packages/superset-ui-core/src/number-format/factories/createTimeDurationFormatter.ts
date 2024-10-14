@@ -17,34 +17,27 @@
  * under the License.
  */
 
-import {
-  createD3NumberFormatter,
-  createDurationFormatter,
-  createTimeDurationFormatter,
-  createSiAtMostNDigitFormatter,
-  createMemoryFormatter,
-  formatNumber,
-  getNumberFormatter,
-  getNumberFormatterRegistry,
-  NumberFormats,
-  NumberFormatter,
-  PREVIEW_VALUE,
-} from '@superset-ui/core';
+import NumberFormatter from '../NumberFormatter';
 
-describe('index', () => {
-  it('exports modules', () => {
-    [
-      createD3NumberFormatter,
-      createDurationFormatter,
-      createTimeDurationFormatter,
-      createSiAtMostNDigitFormatter,
-      createMemoryFormatter,
-      formatNumber,
-      getNumberFormatter,
-      getNumberFormatterRegistry,
-      NumberFormats,
-      NumberFormatter,
-      PREVIEW_VALUE,
-    ].forEach(x => expect(x).toBeDefined());
+export default function createTimeDurationFormatter(
+  config: {
+    description?: string;
+    id?: string;
+    label?: string;
+    multiplier?: number;
+  } = {},
+) {
+  const { description, id, label } = config;
+
+  return new NumberFormatter({
+    description,
+    formatFunc: value => {
+      const v = Math.abs(Math.round(value));
+      const h = Math.floor(v / 60);
+      const m = v % 60;
+      return `${h}:${String(m).padStart(2, '0')}`;
+    },
+    id: id ?? 'duration_format',
+    label: label ?? `Duration formatter`,
   });
-});
+}

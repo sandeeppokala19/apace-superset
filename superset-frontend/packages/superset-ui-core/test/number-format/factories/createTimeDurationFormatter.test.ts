@@ -17,34 +17,20 @@
  * under the License.
  */
 
-import {
-  createD3NumberFormatter,
-  createDurationFormatter,
-  createTimeDurationFormatter,
-  createSiAtMostNDigitFormatter,
-  createMemoryFormatter,
-  formatNumber,
-  getNumberFormatter,
-  getNumberFormatterRegistry,
-  NumberFormats,
-  NumberFormatter,
-  PREVIEW_VALUE,
-} from '@superset-ui/core';
+import { NumberFormatter, createTimeDurationFormatter } from '@superset-ui/core';
 
-describe('index', () => {
-  it('exports modules', () => {
-    [
-      createD3NumberFormatter,
-      createDurationFormatter,
-      createTimeDurationFormatter,
-      createSiAtMostNDigitFormatter,
-      createMemoryFormatter,
-      formatNumber,
-      getNumberFormatter,
-      getNumberFormatterRegistry,
-      NumberFormats,
-      NumberFormatter,
-      PREVIEW_VALUE,
-    ].forEach(x => expect(x).toBeDefined());
+describe('createTimeDurationFormatter()', () => {
+  it('creates an instance of NumberFormatter', () => {
+    const formatter = createTimeDurationFormatter();
+    expect(formatter).toBeInstanceOf(NumberFormatter);
+  });
+  it('format seconds in human readable format with default options', () => {
+    const formatter = createTimeDurationFormatter();
+    expect(formatter(0)).toBe('0:00');
+    expect(formatter(1)).toBe('0:01');
+    expect(formatter(59)).toBe('0:59');
+    expect(formatter(59.4)).toBe('0:59');
+    expect(formatter(59.5)).toBe('1:00');
+    expect(formatter(61)).toBe('1:01');
   });
 });
